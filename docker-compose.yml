@@ -1,0 +1,18 @@
+version: '3'
+
+services:
+  mysql:
+    image: mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: mysql
+      MYSQL_DATABASE: ares
+      MYSQL_USER: ares
+#    volumes:
+#       - /data/mysql:/var/lib/mysql
+    ports:
+      - "3306:3306"
+    restart: unless-stopped
+
+networks:
+  default:
+    driver: bridge

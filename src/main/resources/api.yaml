@@ -1,0 +1,149 @@
+openapi: 3.0.0
+info:
+  version: 1.0.0
+  title: Swagger GoGame Players
+  license:
+    name: MIT
+servers:
+  - url: http://aresws.swagger.io/v1
+
+paths:
+  /player/{steamId}:
+    get:
+      summary: Info for a specific player
+      operationId: getPlayerBySteamId
+      security:
+        - api_key: []
+      tags:
+        - players
+      parameters:
+        - name: steamId
+          in: path
+          required: true
+          description: The steam id 64bit of the player to retrieve
+          schema:
+            type: string
+            maximum: 20
+      responses:
+        200:
+          description: Expected response to a valid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Players"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /player/{steamId}/roster:
+    get:
+      summary: Get Player Roster
+      operationId: getPlayerRoster
+      security:
+        - api_key: []
+      parameters:
+        - name: steamId
+          in: path
+          required: true
+          description: The steam id of the player to retrieve
+          schema:
+            type: integer
+            format: int64
+      responses:
+        200:
+          description: Expected response to a valid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Roster"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /hero/buy:
+    post:
+      summary: Buy item
+      operationId: buyHero
+      tags:
+        - Item
+      requestBody:
+        $ref: "#/components/schemas/BuyItem"
+      responses:
+        201:
+          description: Null response
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+components:
+  schemas:
+    Player:
+      type: object
+      required:
+        - steamId
+      properties:
+        steamId:
+          type: integer
+          format: int64
+        credits:
+          type: integer
+          format: int64
+    Players:
+      type: array
+      items:
+        $ref: "#/components/schemas/Players"
+    Hero:
+      type: object
+      properties:
+        game_id:
+          type: integer
+          format: int64
+        roster:
+          type: boolean
+    Roster:
+      type: array
+      items:
+        $ref: "#/components/schemas/Hero"
+    Item:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          type: integer
+          format: int32
+    BuyItem:
+      type: object
+      required:
+        - steamId
+        - gameId
+      properties:
+        steamId:
+          type: integer
+          format: int64
+        gameId:
+          type: integer
+          format: int32
+    Error:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: integer
+          format: int32
+        message:
+          type: string
+  securitySchemes:
+    api_key:
+      type: apiKey
+      name: api_key
+      in: header
+      openIdConnectUrl: "http://www.example.com"
