@@ -105,7 +105,9 @@ public class APIVerticle extends AbstractSQLVerticle {
 
     private void getPlayerBySteamID(RoutingContext routingContext) {
 
-        final Long steamId = new Long(routingContext.pathParam("steamId"));
+        final String steamId = routingContext.pathParam("steamId");
+
+        log.info("getPlayerBySteamID: "+steamId );
 
         getConnection(routingContext, conn -> {
             JsonArray sqlParams = new JsonArray().add(steamId);
@@ -128,7 +130,7 @@ public class APIVerticle extends AbstractSQLVerticle {
     }
 
     private void getPlayerRoster(RoutingContext routingContext) {
-        final Long steamId = new Long(routingContext.pathParam("steamId"));
+        final String steamId = routingContext.pathParam("steamId");
         JsonArray sqlParams = new JsonArray().add(steamId);
 
         getConnection(routingContext, conn -> {
@@ -143,8 +145,10 @@ public class APIVerticle extends AbstractSQLVerticle {
     private void buyHero(RoutingContext routingContext) {
         JsonObject body = routingContext.getBodyAsJson();
 
-        final Long steamId = body.getLong("steamId", -1L);
+        final String steamId = body.getString("steamId", null);
         final Integer gameId = body.getInteger("gameId", -1);
+
+        log.info("buyHero: "+ gameId +" : " + steamId);
 
         getConnection(routingContext, conn -> {
             startTx(routingContext, conn, beginTrans -> {

@@ -16,7 +16,7 @@
             <column name="playerId" type="int unsigned" autoIncrement="true">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
-            <column name="steamId64" type="bigint unsigned">
+            <column name="steamId64" type="varchar(60)">
                 <constraints unique="true"/>
             </column>
             <column name="credits" type="int unsigned">
@@ -64,23 +64,18 @@
 
         <insert tableName="heroes">
             <column name="gameId" value="0"/>
-            <column name="credits" value="5000"/>
+            <column name="credits" value="50"/>
             <column name="description" value="Dekker"/>
         </insert>
         <insert tableName="heroes">
             <column name="gameId" value="1"/>
-            <column name="credits" value="7000"/>
+            <column name="credits" value="70"/>
             <column name="description" value="Shinbi"/>
         </insert>
         <insert tableName="heroes">
             <column name="gameId" value="2"/>
-            <column name="credits" value="9000"/>
+            <column name="credits" value="90"/>
             <column name="description" value="Rampage"/>
-        </insert>
-
-        <insert tableName="players">
-            <column name="steamId64" value="76561197960964184"/>
-            <column name="credits" value="1000"/>
         </insert>
 
     </changeSet>
