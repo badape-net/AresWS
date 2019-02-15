@@ -4,20 +4,19 @@
         xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext"
-        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd
-        http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd">
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd
+        http://www.liquibase.org/xml/ns/dbchangelog-ext
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd">
 
     <preConditions>
-        <runningAs username="root"/>
+        <runningAs username="postgres"/>
     </preConditions>
 
     <changeSet id="1" author="badape">
         <createTable tableName="players">
             <column name="playerId" type="int unsigned" autoIncrement="true">
                 <constraints primaryKey="true" nullable="false"/>
-            </column>
-            <column name="steamId64" type="varchar(60)">
-                <constraints unique="true"/>
             </column>
             <column name="credits" type="int unsigned">
                 <constraints nullable="false"/>
@@ -26,6 +25,22 @@
                 <constraints nullable="false"/>
             </column>
         </createTable>
+        <createTable tableName="devPlayers">
+            <column name="devId" type="int unsigned" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="playerId" type="int unsigned">
+                <constraints nullable="false" />
+            </column>
+        </createTable>
+        <addForeignKeyConstraint baseTableName="devPlayers"
+                                 baseColumnNames="playerId"
+                                 constraintName="playerId_fkey"
+                                 referencedTableName="players"
+                                 referencedColumnNames="playerId"
+                                 onDelete="NO ACTION"
+                                 onUpdate="NO ACTION" />
+
         <createTable tableName="heroes">
             <column name="heroId" type="int unsigned" autoIncrement="true">
                 <constraints primaryKey="true" nullable="false"/>
@@ -64,20 +79,59 @@
 
         <insert tableName="heroes">
             <column name="gameId" value="0"/>
-            <column name="credits" value="50"/>
+            <column name="credits" value="5000"/>
             <column name="description" value="Dekker"/>
         </insert>
         <insert tableName="heroes">
             <column name="gameId" value="1"/>
-            <column name="credits" value="70"/>
+            <column name="credits" value="7000"/>
             <column name="description" value="Shinbi"/>
         </insert>
         <insert tableName="heroes">
             <column name="gameId" value="2"/>
-            <column name="credits" value="90"/>
+            <column name="credits" value="9000"/>
             <column name="description" value="Rampage"/>
         </insert>
-
+        <insert tableName="heroes">
+            <column name="gameId" value="3"/>
+            <column name="credits" value="9000"/>
+            <column name="description" value="Countess"/>
+        </insert>
+        <insert tableName="heroes">
+            <column name="gameId" value="4"/>
+            <column name="credits" value="9000"/>
+            <column name="description" value="Crunch"/>
+        </insert>
+        <insert tableName="heroes">
+            <column name="gameId" value="5"/>
+            <column name="credits" value="9000"/>
+            <column name="description" value="Gadget"/>
+        </insert>
+        <insert tableName="heroes">
+            <column name="gameId" value="6"/>
+            <column name="credits" value="9000"/>
+            <column name="description" value="Grux"/>
+        </insert>
+        <insert tableName="heroes">
+            <column name="gameId" value="7"/>
+            <column name="credits" value="9000"/>
+            <column name="description" value="Kwang"/>
+        </insert>
+        <insert tableName="heroes">
+            <column name="gameId" value="8"/>
+            <column name="credits" value="9000"/>
+            <column name="description" value="Murdock"/>
+        </insert>
+        <insert tableName="heroes">
+            <column name="gameId" value="9"/>
+            <column name="credits" value="9000"/>
+            <column name="description" value="Muriel"/>
+        </insert>
+        <insert tableName="heroes">
+            <column name="gameId" value="10"/>
+            <column name="credits" value="9000"/>
+            <column name="description" value="TwinBlast"/>
+        </insert>
     </changeSet>
 
 </databaseChangeLog>

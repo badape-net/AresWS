@@ -1,26 +1,26 @@
 openapi: 3.0.0
 info:
   version: 1.0.0
-  title: Swagger GoGame Players
+  title: Ares Web Services
   license:
     name: MIT
 servers:
-  - url: http://aresws.swagger.io/v1
+  - url: http://api.badape.online/v1
 
 paths:
-  /player/{steamId}:
+  /player/dev/{playerId}:
     get:
       summary: Info for a specific player
-      operationId: getPlayerBySteamId
+      operationId: getPlayerByDevPlayerId
       security:
         - api_key: []
       tags:
         - players
       parameters:
-        - name: steamId
+        - name: playerId
           in: path
           required: true
-          description: The steam id 64bit of the player to retrieve
+          description: The player id 64bit of the player to retrieve
           schema:
             type: string
             maximum: 20
@@ -37,17 +37,17 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-  /player/{steamId}/roster:
+  /player/dev/{playerId}/roster:
     get:
       summary: Get Player Roster
       operationId: getPlayerRoster
       security:
         - api_key: []
       parameters:
-        - name: steamId
+        - name: playerId
           in: path
           required: true
-          description: The steam id of the player to retrieve
+          description: The player id of the player to retrieve
           schema:
             type: integer
             format: int64
@@ -58,6 +58,33 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Roster"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /hero/data/{heroId}:
+    get:
+      summary: get Hero data
+      operationId: heroData
+      tags:
+        - Item
+      parameters:
+        - name: heroId
+          in: path
+          required: true
+          description: The hero id
+          schema:
+            type: integer
+            format: int64
+      responses:
+        200:
+          description: Expected response to a valid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Hero"
         default:
           description: unexpected error
           content:
@@ -86,9 +113,9 @@ components:
     Player:
       type: object
       required:
-        - steamId
+        - playerId
       properties:
-        steamId:
+        playerId:
           type: integer
           format: int64
         credits:
@@ -118,13 +145,24 @@ components:
         id:
           type: integer
           format: int32
+    Item:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          type: integer
+          format: int32
+        credits:
+          type: integer
+          format: int32
     BuyItem:
       type: object
       required:
-        - steamId
+        - playerId
         - gameId
       properties:
-        steamId:
+        playerId:
           type: integer
           format: int64
         gameId:

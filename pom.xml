@@ -5,16 +5,27 @@
     <name>Ares Web Services</name>
     <description>Player Services</description>
     <groupId>net.badape</groupId>
-    <artifactId>ariesws</artifactId>
+    <artifactId>aresws</artifactId>
     <version>1.0.0</version>
     <packaging>jar</packaging>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
-        <vertx.version>3.5.2</vertx.version>
+        <vertx.version>3.6.3</vertx.version>
 
-        <verticle.name>net.badape.aresws.APIVerticle</verticle.name>
+        <verticle.name>net.badape.aresws.AresWebServices</verticle.name>
+
+        <docker.image>badape/aresws</docker.image>
+        <docker.port.container.http>8080</docker.port.container.http>
+
+        <!-- Metadata to generate the kubernates.json - ignore them if you don't plan to use kubernates / fabric8 -->
+        <fabric8.label.container>aresws</fabric8.label.container>
+        <fabric8.label.group>badape</fabric8.label.group>
+        <fabric8.service.name>aresws</fabric8.service.name>
+        <fabric8.service.port>80</fabric8.service.port>
+        <fabric8.service.containerPort>${docker.port.container.http}</fabric8.service.containerPort>
+
     </properties>
 
     <dependencies>
@@ -38,9 +49,9 @@
         </dependency>
 
         <dependency>
-            <groupId>mysql</groupId>
-            <artifactId>mysql-connector-java</artifactId>
-            <version>8.0.11</version>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <version>42.2.5</version>
         </dependency>
 
         <!-- https://mvnrepository.com/artifact/org.projectlombok/lombok -->
@@ -54,7 +65,7 @@
         <dependency>
             <groupId>org.liquibase</groupId>
             <artifactId>liquibase-core</artifactId>
-            <version>3.6.1</version>
+            <version>3.6.2</version>
         </dependency>
 
 
@@ -67,7 +78,7 @@
         <dependency>
             <groupId>io.vertx</groupId>
             <artifactId>vertx-unit</artifactId>
-            <version>3.3.3</version>
+            <version>${vertx.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -75,7 +86,6 @@
     <build>
         <testOutputDirectory>target/test-classes</testOutputDirectory>
         <sourceDirectory>src/main/java</sourceDirectory>
-        <scriptSourceDirectory>src/main/scripts</scriptSourceDirectory>
         <testSourceDirectory>src/test/java</testSourceDirectory>
 
         <resources>
@@ -93,17 +103,17 @@
         <plugins>
             <plugin>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.3</version>
+                <version>3.8.0</version>
                 <configuration>
-                    <source>1.8</source>
-                    <target>1.8</target>
+                    <source>${maven.compiler.source}</source>
+                    <target>${maven.compiler.target}</target>
                 </configuration>
             </plugin>
 
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
-                <version>2.3</version>
+                <version>3.2.1</version>
                 <executions>
                     <execution>
                         <phase>package</phase>
@@ -136,37 +146,16 @@
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>exec-maven-plugin</artifactId>
-                <version>1.4.0</version>
-                <executions>
-                    <execution>
-                        <id>run</id>
-                        <goals>
-                            <goal>java</goal>
-                        </goals>
-                        <configuration>
-                            <mainClass>io.vertx.core.Launcher</mainClass>
-                            <arguments>
-                                <argument>run</argument>
-                                <argument>${main.verticle}</argument>
-                            </arguments>
-                        </configuration>
-                    </execution>
-
-                    <execution>
-                        <id>run-app</id>
-                        <goals>
-                            <goal>exec</goal>
-                        </goals>
-                        <configuration>
-                            <executable>java</executable>
-                            <arguments>
-                                <argument>-jar</argument>
-                                <argument>target/${project.artifactId}-${project.version}-fat.jar</argument>
-                            </arguments>
-                        </configuration>
-                    </execution>
-                </executions>
+                <version>1.6.0</version>
+                <configuration>
+                    <mainClass>io.vertx.core.Launcher</mainClass>
+                    <arguments>
+                        <argument>run</argument>
+                        <argument>${verticle.name}</argument>
+                    </arguments>
+                </configuration>
             </plugin>
+
 
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -177,34 +166,90 @@
                 </configuration>
             </plugin>
 
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-project-info-reports-plugin</artifactId>
-                <version>2.6</version>
-            </plugin>
+            <!--<plugin>-->
+                <!--<groupId>org.apache.maven.plugins</groupId>-->
+                <!--<artifactId>maven-project-info-reports-plugin</artifactId>-->
+                <!--<version>2.6</version>-->
+            <!--</plugin>-->
+
+            <!--<plugin>-->
+                <!--<groupId>org.codehaus.mojo</groupId>-->
+                <!--<artifactId>cobertura-maven-plugin</artifactId>-->
+                <!--<version>2.7</version>-->
+            <!--</plugin>-->
 
             <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>cobertura-maven-plugin</artifactId>
-                <version>2.7</version>
+                <groupId>io.fabric8</groupId>
+                <artifactId>docker-maven-plugin</artifactId>
+                <version>0.28.0</version>
+                <configuration>
+                    <images>
+                        <image>
+                            <name>${docker.image}</name>
+                            <build>
+                                <from>java:8-jre</from>
+                                <tags>
+                                    <tag>${project.version}</tag>
+                                </tags>
+                                <ports>
+                                    <port>8080</port>
+                                </ports>
+                                <cmd>
+                                    <exec>
+                                        <arg>java</arg>
+                                        <arg>-jar</arg>
+                                        <arg>/usr/verticles/${project.artifactId}-${project.version}-fat.jar</arg>
+                                        <arg>-conf</arg>
+                                        <arg>/usr/verticles/config.json</arg>
+                                    </exec>
+                                </cmd>
+                                <runCmds>
+                                    <runcmd>chmod -R 644 /usr/verticles</runcmd>
+                                    <runcmd>chmod -R 644 /usr/verticles/*</runcmd>
+                                </runCmds>
+                                <assembly>
+                                    <basedir>/</basedir>
+                                    <inline>
+                                        <files>
+                                            <file>
+                                                <source>
+                                                    ${project.build.directory}/${project.artifactId}-${project.version}-fat.jar
+                                                </source>
+                                                <outputDirectory>/usr/verticles/</outputDirectory>
+                                                <fileMode>0755</fileMode>
+                                            </file>
+                                            <file>
+                                                <source>
+                                                    ${project.basedir}/etc/config.json
+                                                </source>
+                                                <outputDirectory>/usr/verticles/</outputDirectory>
+                                                <fileMode>0644</fileMode>
+                                            </file>
+                                        </files>
+                                    </inline>
+                                </assembly>
+                            </build>
+                        </image>
+                    </images>
+                </configuration>
             </plugin>
         </plugins>
     </build>
 
-    <reporting>
-        <plugins>
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>cobertura-maven-plugin</artifactId>
-                <version>2.7</version>
-                <configuration>
-                    <check></check>
-                    <formats>
-                        <format>html</format>
-                        <format>xml</format>
-                    </formats>
-                </configuration>
-            </plugin>
-        </plugins>
-    </reporting>
+    <!--<reporting>-->
+        <!--<plugins>-->
+            <!--<plugin>-->
+                <!--<groupId>org.codehaus.mojo</groupId>-->
+                <!--<artifactId>cobertura-maven-plugin</artifactId>-->
+                <!--<version>2.7</version>-->
+                <!--<configuration>-->
+                    <!--<check></check>-->
+                    <!--<formats>-->
+                        <!--<format>html</format>-->
+                        <!--<format>xml</format>-->
+                    <!--</formats>-->
+                <!--</configuration>-->
+            <!--</plugin>-->
+        <!--</plugins>-->
+    <!--</reporting>-->
 </project>

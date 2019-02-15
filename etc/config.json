@@ -1,0 +1,9 @@
+{
+  "db": {
+    "url": "jdbc:postgresql://postgres:5432/ares",
+    "user": "postgres",
+    "password": "changeme",
+    "driver_class": "org.postgresql.Driver",
+    "max_pool_size": 10
+  }
+}

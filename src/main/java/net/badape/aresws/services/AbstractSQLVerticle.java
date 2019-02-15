@@ -1,4 +1,4 @@
-package net.badape.aresws;
+package net.badape.aresws.services;
 
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.AsyncResult;
@@ -16,6 +16,7 @@ import liquibase.Contexts;
 import liquibase.LabelExpression;
 import liquibase.Liquibase;
 import liquibase.database.Database;
+import liquibase.database.DatabaseFactory;
 import liquibase.database.jvm.JdbcConnection;
 import liquibase.exception.DatabaseException;
 import liquibase.exception.LiquibaseException;
@@ -44,7 +45,11 @@ public abstract class AbstractSQLVerticle extends AbstractVerticle {
         Database db = null;
         ResourceAccessor resourceAccessor;
         try {
-            db = createDatabase(dbUrl, dbUser, dbPassword, defaultSchema);
+
+            JdbcConnection liquibaseDbConnection = createDatabase(dbUrl, dbUser, dbPassword, defaultSchema);
+            db = DatabaseFactory.getInstance().findCorrectDatabaseImplementation(liquibaseDbConnection);
+            db.setDefaultSchemaName(defaultSchema);
+
             resourceAccessor = new ClassLoaderResourceAccessor();
             changeLogFile = changeLogFile.substring(10);
 
@@ -67,10 +72,10 @@ public abstract class AbstractSQLVerticle extends AbstractVerticle {
         JsonObject dbConfig = config().getJsonObject("db", new JsonObject());
 
         return new JsonObject()
-                .put("url", dbConfig.getString("url", "jdbc:mysql://localhost:3306/" + schema))
-                .put("user", dbConfig.getString("user", "root"))
-                .put("password", dbConfig.getString("password", "mysql"))
-                .put("driver_class", dbConfig.getString("driver_class", "com.mysql.cj.jdbc.Driver"))
+                .put("url", dbConfig.getString("url", "jdbc:postgresql://localhost:5432/" + schema))
+                .put("user", dbConfig.getString("user", "postgres"))
+                .put("password", dbConfig.getString("password", "changeme"))
+                .put("driver_class", dbConfig.getString("driver_class", "org.postgresql.Driver"))
                 .put("schema", schema)
                 .put("changeLogFile", changeLogFile)
                 .put("max_pool_size", dbConfig.getInteger("max_pool_size", 30));
@@ -92,21 +97,17 @@ public abstract class AbstractSQLVerticle extends AbstractVerticle {
 
     }
 
-    private Database createDatabase(String dbUrl, String dbUser, String dbPassword, String defaultSchema)
+    private JdbcConnection createDatabase(String dbUrl, String dbUser, String dbPassword, String defaultSchema)
             throws SQLException, LiquibaseException {
 
         Connection connection = DriverManager.getConnection(dbUrl, dbUser, dbPassword);
         try (Statement statement = connection.createStatement()) {
             int count = statement.executeUpdate("CREATE SCHEMA " + defaultSchema);
         } catch (SQLException ex) {
-            log.info(ex.getMessage());
+            log.error("createDatabase "+ ex.getMessage());
         }
 
-        JdbcConnection liquibaseDbConnection = new JdbcConnection(connection);
-
-        Liquibase liquibase = new Liquibase(null, null, liquibaseDbConnection);
-
-        return liquibase.getDatabase();
+        return new JdbcConnection(connection);
     }
 
     protected void getConnection(RoutingContext routingContext,  Handler<SQLConnection> done) {
