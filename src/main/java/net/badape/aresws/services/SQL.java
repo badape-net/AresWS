@@ -16,4 +16,5 @@ public class SQL {
 
     public final static String SQL_ADD_ROSTER = "INSERT INTO ares.roster (playerId, heroId) " +
             "VALUES ((SELECT playerId FROM ares.players WHERE steamId64 = ?), ? );";
+    public static final String SQL_HEROES = "SELECT * FROM ares.heroes;";
 }

@@ -9,10 +9,6 @@
         http://www.liquibase.org/xml/ns/dbchangelog-ext
         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd">
 
-    <preConditions>
-        <runningAs username="postgres"/>
-    </preConditions>
-
     <changeSet id="1" author="badape">
         <createTable tableName="players">
             <column name="playerId" type="int unsigned" autoIncrement="true">

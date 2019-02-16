@@ -51,6 +51,7 @@ public class APIVerticle extends AbstractSQLVerticle {
             routerFactory.addFailureHandlerByOperationId("getPlayerRoster", this::failureHandler);
 
             routerFactory.addHandlerByOperationId("heroData", this::heroData);
+            routerFactory.addHandlerByOperationId("heroesConfig", this::heroesConfig);
             routerFactory.addFailureHandlerByOperationId("heroData", this::failureHandler);
             routerFactory.addHandlerByOperationId("buyHero", this::buyHero);
             routerFactory.addFailureHandlerByOperationId("buyHero", this::failureHandler);
@@ -136,6 +137,20 @@ public class APIVerticle extends AbstractSQLVerticle {
             queryWithParams(routingContext, conn, SQL.SQL_HERO_DATA, sqlParams, result -> {
                 conn.close();
                 JsonObject hero = result.getRows().get(0);
+                routingContext.response().setStatusMessage("OK").end(hero.encode());
+            });
+        });
+    }
+
+    private void heroesConfig(RoutingContext routingContext) {
+        getConnection(routingContext, conn -> {
+            query(routingContext, conn, SQL.SQL_HEROES, result -> {
+                conn.close();
+                JsonObject hero = result.toJson();
+                hero.remove("results");
+                hero.remove("columnNames");
+                hero.remove("numColumns");
+                hero.remove("numRows");
                 routingContext.response().setStatusMessage("OK").end(hero.encode());
             });
         });

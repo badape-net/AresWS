@@ -64,6 +64,25 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+  /hero/data:
+    get:
+      summary: get Heroes data
+      operationId: heroesConfig
+      tags:
+        - Item
+      responses:
+        200:
+          description: Expected response to a valid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Heroes"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
   /hero/data/{heroId}:
     get:
       summary: get Hero data
@@ -133,6 +152,13 @@ components:
           format: int64
         roster:
           type: boolean
+    Heroes:
+      type: object
+      properties:
+        heroes:
+          type: array
+          items:
+            $ref: "#/components/schemas/Hero"
     Roster:
       type: array
       items:
