@@ -17,4 +17,9 @@ public class SQL {
     public final static String SQL_ADD_ROSTER = "INSERT INTO ares.roster (playerId, heroId) " +
             "VALUES ((SELECT playerId FROM ares.players WHERE steamId64 = ?), ? );";
     public static final String SQL_HEROES = "SELECT * FROM ares.heroes;";
+
+    public static final String SQL_UPSERT_HERO =
+            "INSERT INTO ares.heroes(\"heroId\", \"gameId\", credits, description) VALUES (?, ?, ?, ?)" +
+            "ON CONFLICT ON CONSTRAINT heroes_pkey DO " +
+            "UPDATE SET \"gameId\"=?, credits=?, description=? WHERE heroes.\"heroId\"=?";
 }

@@ -42,7 +42,7 @@
                 <constraints primaryKey="true" nullable="false"/>
             </column>
             <column name="gameId" type="int unsigned">
-                <constraints unique="true" nullable="false"/>
+                <constraints unique="false" nullable="false"/>
             </column>
             <column name="credits" type="int unsigned">
                 <constraints nullable="false"/>
@@ -73,61 +73,7 @@
         <addForeignKeyConstraint baseTableName="transactions" baseColumnNames="heroId" constraintName="heroId_fkey" referencedTableName="heroes"
                                  referencedColumnNames="heroId" onDelete="NO ACTION" onUpdate="NO ACTION" />
 
-        <insert tableName="heroes">
-            <column name="gameId" value="0"/>
-            <column name="credits" value="5000"/>
-            <column name="description" value="Dekker"/>
-        </insert>
-        <insert tableName="heroes">
-            <column name="gameId" value="1"/>
-            <column name="credits" value="7000"/>
-            <column name="description" value="Shinbi"/>
-        </insert>
-        <insert tableName="heroes">
-            <column name="gameId" value="2"/>
-            <column name="credits" value="9000"/>
-            <column name="description" value="Rampage"/>
-        </insert>
-        <insert tableName="heroes">
-            <column name="gameId" value="3"/>
-            <column name="credits" value="9000"/>
-            <column name="description" value="Countess"/>
-        </insert>
-        <insert tableName="heroes">
-            <column name="gameId" value="4"/>
-            <column name="credits" value="9000"/>
-            <column name="description" value="Crunch"/>
-        </insert>
-        <insert tableName="heroes">
-            <column name="gameId" value="5"/>
-            <column name="credits" value="9000"/>
-            <column name="description" value="Gadget"/>
-        </insert>
-        <insert tableName="heroes">
-            <column name="gameId" value="6"/>
-            <column name="credits" value="9000"/>
-            <column name="description" value="Grux"/>
-        </insert>
-        <insert tableName="heroes">
-            <column name="gameId" value="7"/>
-            <column name="credits" value="9000"/>
-            <column name="description" value="Kwang"/>
-        </insert>
-        <insert tableName="heroes">
-            <column name="gameId" value="8"/>
-            <column name="credits" value="9000"/>
-            <column name="description" value="Murdock"/>
-        </insert>
-        <insert tableName="heroes">
-            <column name="gameId" value="9"/>
-            <column name="credits" value="9000"/>
-            <column name="description" value="Muriel"/>
-        </insert>
-        <insert tableName="heroes">
-            <column name="gameId" value="10"/>
-            <column name="credits" value="9000"/>
-            <column name="description" value="TwinBlast"/>
-        </insert>
+
     </changeSet>
 
 </databaseChangeLog>

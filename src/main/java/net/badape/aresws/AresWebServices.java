@@ -9,6 +9,9 @@ import net.badape.aresws.services.TCPService;
 public class AresWebServices extends AbstractVerticle {
 
     public static void main(String[] args) {
+
+        log.info("AresWS main");
+
         Launcher.main(new String[]{"run", AresWebServices.class.getName(), "-ha"});
     }
 

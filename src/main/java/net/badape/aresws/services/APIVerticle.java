@@ -1,6 +1,9 @@
 package net.badape.aresws.services;
 
+import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
+import io.vertx.core.Handler;
+import io.vertx.core.file.FileSystem;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.json.JsonArray;
@@ -25,9 +28,49 @@ public class APIVerticle extends AbstractSQLVerticle {
 
         updateSchema(sqlConfig, result -> {
             if (result.succeeded()) {
-                startOpenAPI(future);
+                loadData(loadResult -> {
+                    if (loadResult.succeeded()) {
+                        startOpenAPI(future);
+                    } else {
+                        future.fail(loadResult.cause());
+                    }
+                });
+
             } else {
                 future.fail(result.cause());
+            }
+        });
+    }
+
+    private void loadData(Handler<AsyncResult<Void>> hndlr) {
+        FileSystem fs = vertx.fileSystem();
+
+        vertx.fileSystem().readFile("config/heroes.json", result -> {
+            if (result.succeeded()) {
+                JsonArray heroConfig = result.result().toJsonArray();
+                getConnection(conn -> {
+                    heroConfig.forEach(object -> {
+                        if (object instanceof JsonObject) {
+                            JsonObject hero = (JsonObject) object;
+                            Integer heroId = hero.getInteger("heroId");
+                            Integer gameId = hero.getInteger("gameId");
+                            Integer credits = hero.getInteger("credits");
+                            String description = hero.getString("description");
+                            JsonArray sqlParams = new JsonArray()
+                                    .add(heroId).add(gameId).add(credits).add(description)
+                                    .add(gameId).add(credits).add(description).add(heroId);
+                            updateWithParams(conn, SQL.SQL_UPSERT_HERO, sqlParams, cPlayer -> {
+                                if (result.failed()) {
+                                    log.error("failed to update: " + heroId);
+                                }
+                            });
+                        }
+                    });
+                });
+                hndlr.handle(Future.succeededFuture());
+            } else {
+                log.error(result.cause().getMessage());
+                hndlr.handle(Future.failedFuture(result.cause()));
             }
         });
     }
@@ -150,7 +193,7 @@ public class APIVerticle extends AbstractSQLVerticle {
                 hero.remove("results");
                 hero.remove("columnNames");
                 hero.remove("numColumns");
-                hero.remove("numRows");
+                log.info(hero.encode());
                 routingContext.response().setStatusMessage("OK").end(hero.encode());
             });
         });

@@ -104,13 +104,22 @@ public abstract class AbstractSQLVerticle extends AbstractVerticle {
         try (Statement statement = connection.createStatement()) {
             int count = statement.executeUpdate("CREATE SCHEMA " + defaultSchema);
         } catch (SQLException ex) {
-            log.error("createDatabase "+ ex.getMessage());
+            log.error("createDatabase " + ex.getMessage());
         }
 
         return new JdbcConnection(connection);
     }
 
-    protected void getConnection(RoutingContext routingContext,  Handler<SQLConnection> done) {
+    protected void getConnection(Handler<SQLConnection> done) {
+        sqlClient.getConnection(res -> {
+            if (res.failed()) {
+                log.error(res.cause().getMessage());
+            }
+            done.handle(res.result());
+        });
+    }
+
+    protected void getConnection(RoutingContext routingContext, Handler<SQLConnection> done) {
         sqlClient.getConnection(res -> {
             if (res.succeeded()) {
                 done.handle(res.result());
@@ -128,6 +137,16 @@ public abstract class AbstractSQLVerticle extends AbstractVerticle {
             } else {
                 done.handle(res.result());
             }
+        });
+    }
+
+
+    protected void updateWithParams(SQLConnection conn, String sql, JsonArray params, Handler<UpdateResult> done) {
+        conn.updateWithParams(sql, params, res -> {
+            if (res.failed()) {
+                log.error(res.cause().getMessage());
+            }
+            done.handle(res.result());
         });
     }
 
