@@ -6,7 +6,6 @@ import io.vertx.core.Handler;
 import io.vertx.core.file.FileSystem;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerOptions;
-import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
@@ -141,6 +140,8 @@ public class APIVerticle extends AbstractSQLVerticle {
 
         final int devId = Integer.parseInt(routingContext.pathParam("playerId"));
 
+        log.info("getPlayerByDevPlayerId: "+ devId);
+
         getConnection(routingContext, conn -> {
 
             JsonArray sqlParams = new JsonArray().add(devId);
@@ -149,7 +150,7 @@ public class APIVerticle extends AbstractSQLVerticle {
                 if (result.getNumRows() != 0) {
                     JsonObject player = result.getRows().get(0);
                     JsonObject reply = new JsonObject()
-                            .put("playerId", player.getInteger("devId"))
+                            .put("playerId", player.getInteger("playerId"))
                             .put("credits", player.getInteger("credits"));
 
                     conn.close();
@@ -164,7 +165,7 @@ public class APIVerticle extends AbstractSQLVerticle {
 
                         updateWithParams(routingContext, conn, SQL.SQL_CREATE_DEV_PLAYER, sqlParams, cDevPlayer -> {
                             JsonObject reply = new JsonObject()
-                                    .put("playerId", devId)
+                                    .put("playerId", cPlayer.getKeys().getInteger(0))
                                     .put("credits", cPlayer.getKeys().getInteger(1));
 
                             conn.close();
