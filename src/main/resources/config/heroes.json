@@ -1,67 +1,67 @@
 [
   {
-    "heroId": 1,
-    "gameId": 2,
+    "hero_id": 1,
+    "game_id": 2,
     "credits": 5000,
     "description": "Dekker"
   },
   {
-    "heroId": 2,
-    "gameId": 9,
+    "hero_id": 2,
+    "game_id": 9,
     "credits": 7000,
     "description": "Shinbi"
   },
   {
-    "heroId": 3,
-    "gameId": 8,
+    "hero_id": 3,
+    "game_id": 8,
     "credits": 9000,
     "description": "Rampage"
   },
   {
-    "heroId": 4,
-    "gameId": 0,
+    "hero_id": 4,
+    "game_id": 0,
     "credits": 9000,
     "description": "Countess"
   },
   {
-    "heroId": 5,
-    "gameId": 1,
+    "hero_id": 5,
+    "game_id": 1,
     "credits": 9000,
     "description": "Crunch"
   },
   {
-    "heroId": 6,
-    "gameId": 3,
+    "hero_id": 6,
+    "game_id": 3,
     "credits": 9000,
     "description": "Gadget"
   },
   {
-    "heroId": 7,
-    "gameId": 4,
+    "hero_id": 7,
+    "game_id": 4,
     "credits": 9000,
     "description": "Grux"
   },
   {
-    "heroId": 8,
-    "gameId": 5,
+    "hero_id": 8,
+    "game_id": 5,
     "credits": 9000,
     "description": "Kwang"
   },
   {
-    "heroId": 9,
-    "gameId": 6,
+    "hero_id": 9,
+    "game_id": 6,
     "credits": 9000,
     "description": "Murdock"
   },
   {
-    "heroId": 10,
-    "gameId": 7,
+    "hero_id": 10,
+    "game_id": 7,
     "credits": 9000,
     "description": "Muriel"
   },
   {
-    "heroId": 11,
-    "gameId": 10,
+    "hero_id": 11,
+    "game_id": 10,
     "credits": 9000,
     "description": "TwinBlast"
   }

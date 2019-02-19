@@ -11,7 +11,7 @@
 
     <changeSet id="1" author="badape">
         <createTable tableName="players">
-            <column name="playerId" type="int unsigned" autoIncrement="true">
+            <column name="player_id" type="int unsigned" autoIncrement="true">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
             <column name="credits" type="int unsigned">
@@ -21,27 +21,27 @@
                 <constraints nullable="false"/>
             </column>
         </createTable>
-        <createTable tableName="devPlayers">
-            <column name="devId" type="int unsigned" autoIncrement="true">
+        <createTable tableName="dev_players">
+            <column name="dev_id" type="int unsigned" autoIncrement="true">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
-            <column name="playerId" type="int unsigned">
+            <column name="player_id" type="int unsigned">
                 <constraints nullable="false" />
             </column>
         </createTable>
-        <addForeignKeyConstraint baseTableName="devPlayers"
-                                 baseColumnNames="playerId"
-                                 constraintName="playerId_fkey"
+        <addForeignKeyConstraint baseTableName="dev_players"
+                                 baseColumnNames="player_id"
+                                 constraintName="player_id_fkey"
                                  referencedTableName="players"
-                                 referencedColumnNames="playerId"
+                                 referencedColumnNames="player_id"
                                  onDelete="NO ACTION"
                                  onUpdate="NO ACTION" />
 
         <createTable tableName="heroes">
-            <column name="heroId" type="int unsigned" autoIncrement="true">
+            <column name="hero_id" type="int unsigned" autoIncrement="true">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
-            <column name="gameId" type="int unsigned">
+            <column name="game_id" type="int unsigned">
                 <constraints unique="false" nullable="false"/>
             </column>
             <column name="credits" type="int unsigned">
@@ -52,26 +52,30 @@
             </column>
         </createTable>
         <createTable tableName="roster">
-            <column name="playerId" type="int unsigned">
+            <column name="player_id" type="int unsigned">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
-            <column name="heroId" type="int unsigned">
+            <column name="hero_id" type="int unsigned">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
         </createTable>
         <createTable tableName="transactions">
-            <column name="transactionId" type="bigint unsigned" autoIncrement="true">
+            <column name="transaction_id" type="bigint unsigned" autoIncrement="true">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
             <column name="credits" type="int unsigned">
                 <constraints nullable="false"/>
             </column>
-            <column name="heroId" type="int unsigned">
+            <column name="hero_id" type="int unsigned">
                 <constraints nullable="false" />
             </column>
         </createTable>
-        <addForeignKeyConstraint baseTableName="transactions" baseColumnNames="heroId" constraintName="heroId_fkey" referencedTableName="heroes"
-                                 referencedColumnNames="heroId" onDelete="NO ACTION" onUpdate="NO ACTION" />
+        <addForeignKeyConstraint baseTableName="transactions"
+                                 baseColumnNames="hero_id"
+                                 constraintName="hero_id_fkey"
+                                 referencedTableName="heroes"
+                                 referencedColumnNames="hero_id"
+                                 onDelete="NO ACTION" onUpdate="NO ACTION" />
 
 
     </changeSet>

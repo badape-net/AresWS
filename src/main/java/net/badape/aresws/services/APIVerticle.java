@@ -52,8 +52,8 @@ public class APIVerticle extends AbstractSQLVerticle {
                     heroConfig.forEach(object -> {
                         if (object instanceof JsonObject) {
                             JsonObject hero = (JsonObject) object;
-                            Integer heroId = hero.getInteger("heroId");
-                            Integer gameId = hero.getInteger("gameId");
+                            Integer heroId = hero.getInteger("hero_id");
+                            Integer gameId = hero.getInteger("game_id");
                             Integer credits = hero.getInteger("credits");
                             String description = hero.getString("description");
                             JsonArray sqlParams = new JsonArray()
@@ -150,7 +150,7 @@ public class APIVerticle extends AbstractSQLVerticle {
                 if (result.getNumRows() != 0) {
                     JsonObject player = result.getRows().get(0);
                     JsonObject reply = new JsonObject()
-                            .put("playerId", player.getInteger("playerId"))
+                            .put("player_id", player.getInteger("player_id"))
                             .put("credits", player.getInteger("credits"));
 
                     conn.close();
@@ -178,7 +178,7 @@ public class APIVerticle extends AbstractSQLVerticle {
     }
 
     private void heroData(RoutingContext routingContext) {
-        final String heroId = routingContext.pathParam("heroId");
+        final String heroId = routingContext.pathParam("hero_id");
         JsonArray sqlParams = new JsonArray().add(new Integer(heroId));
 
         getConnection(routingContext, conn -> {
@@ -219,6 +219,8 @@ public class APIVerticle extends AbstractSQLVerticle {
 
     private void buyHero(RoutingContext routingContext) {
         JsonObject body = routingContext.getBodyAsJson();
+
+        log.info("buyHero");
 
         final String steamId = body.getString("steamId", null);
         final Integer gameId = body.getInteger("gameId", -1);
