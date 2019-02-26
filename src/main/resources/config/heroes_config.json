@@ -1,0 +1,90 @@
+[
+  {
+    "hero_id": 1,
+    "game_id": 2,
+    "health": 5000,
+    "mana": 4000,
+    "stamina": 3000,
+    "spawn_cost": 30
+  },
+  {
+    "hero_id": 2,
+    "game_id": 9,
+    "health": 5000,
+    "mana": 4000,
+    "stamina": 3000,
+    "spawn_cost": 30
+  },
+  {
+    "hero_id": 3,
+    "game_id": 8,
+    "health": 5000,
+    "mana": 4000,
+    "stamina": 3000,
+    "spawn_cost": 30
+  },
+  {
+    "hero_id": 4,
+    "game_id": 0,
+    "health": 5000,
+    "mana": 4000,
+    "stamina": 3000,
+    "spawn_cost": 30
+  },
+  {
+    "hero_id": 5,
+    "game_id": 1,
+    "health": 5000,
+    "mana": 4000,
+    "stamina": 3000,
+    "spawn_cost": 30
+  },
+  {
+    "hero_id": 6,
+    "game_id": 3,
+    "health": 5000,
+    "mana": 4000,
+    "stamina": 3000,
+    "spawn_cost": 30
+  },
+  {
+    "hero_id": 7,
+    "game_id": 4,
+    "health": 5000,
+    "mana": 4000,
+    "stamina": 3000,
+    "spawn_cost": 30
+  },
+  {
+    "hero_id": 8,
+    "game_id": 5,
+    "health": 5000,
+    "mana": 4000,
+    "stamina": 3000,
+    "spawn_cost": 30
+  },
+  {
+    "hero_id": 9,
+    "game_id": 6,
+    "health": 5000,
+    "mana": 4000,
+    "stamina": 3000,
+    "spawn_cost": 30
+  },
+  {
+    "hero_id": 10,
+    "game_id": 7,
+    "health": 5000,
+    "mana": 4000,
+    "stamina": 3000,
+    "spawn_cost": 30
+  },
+  {
+    "hero_id": 11,
+    "game_id": 10,
+    "health": 5000,
+    "mana": 4000,
+    "stamina": 3000,
+    "spawn_cost": 30
+  }
+]

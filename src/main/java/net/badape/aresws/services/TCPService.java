@@ -2,6 +2,7 @@ package net.badape.aresws.services;
 
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.DeploymentOptions;
+import io.vertx.core.Future;
 import io.vertx.core.net.NetServer;
 import io.vertx.core.net.NetServerOptions;
 import lombok.extern.slf4j.Slf4j;
@@ -16,7 +17,7 @@ public class TCPService extends AbstractVerticle {
     Map<String, String> gameMap = new HashMap<>();
 
     @Override
-    public void start() {
+    public void start(Future<Void> startFuture) {
 
         NetServerOptions netServerOptions = new NetServerOptions().setPort(4321);
         NetServer server = vertx.createNetServer(netServerOptions);
@@ -41,6 +42,7 @@ public class TCPService extends AbstractVerticle {
         server.listen();
 
         log.info("Echo server is now listening");
+        startFuture.complete();
 
     }
 }
