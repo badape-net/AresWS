@@ -48,7 +48,7 @@ public class PlayerActorTest {
         @DisplayName("🛂 Make a HTTP client request to SampleVerticle")
         void httpRequest(VertxTestContext testContext) {
             WebClient webClient = WebClient.create(vertx);
-            int maxCount = 10000;
+            int maxCount = 100;
             Checkpoint deploymentCheckpoint = testContext.checkpoint();
             Checkpoint requestCheckpoint = testContext.checkpoint(maxCount);
 

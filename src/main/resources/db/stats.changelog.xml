@@ -15,49 +15,52 @@
             <column name="hero_id" type="bigint" autoIncrement="true">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
+            <column name="game_id" type="bigint">
+                <constraints unique="true" nullable="false"/>
+            </column>
             <column name="health" type="bigint">
-                <constraints unique="false" nullable="false"/>
+                <constraints nullable="false"/>
             </column>
             <column name="mana" type="bigint">
-                <constraints unique="false" nullable="false"/>
+                <constraints nullable="false"/>
             </column>
             <column name="stamina" type="bigint">
-                <constraints unique="false" nullable="false"/>
+                <constraints nullable="false"/>
             </column>
             <column name="spawn_cost" type="bigint">
-                <constraints unique="false" nullable="false"/>
+                <constraints nullable="false"/>
             </column>
         </createTable>
 
         <createTable tableName="roster">
-            <column name="player_id" type="bigint">
+            <column name="roster_id" type="bigint" autoIncrement="true">
                 <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="player_id" type="bigint">
+                <constraints nullable="false"/>
             </column>
             <column name="hero_id" type="bigint">
-                <constraints primaryKey="true" nullable="false"/>
+                <constraints nullable="false"/>
             </column>
-            <column name="game_id" type="bigint">
-                <constraints unique="false" nullable="false"/>
+            <column name="level" type="bigint" defaultValueNumeric="0">
+                <constraints nullable="false"/>
             </column>
-            <column name="level" type="bigint">
-                <constraints primaryKey="true" nullable="false"/>
+            <column name="experience" type="bigint" defaultValue="0">
+                <constraints nullable="false"/>
             </column>
-            <column name="stats_id" type="bigint">
-                <constraints primaryKey="false" nullable="false" unique="true"/>
+            <column name="kills" type="bigint" defaultValue="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="deaths" type="bigint" defaultValue="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="resources" type="bigint" defaultValue="0">
+                <constraints nullable="false"/>
             </column>
         </createTable>
 
         <createTable tableName="account">
             <column name="player_id" type="bigint" autoIncrement="true">
-                <constraints primaryKey="true" nullable="false"/>
-            </column>
-            <column name="stats_id" type="bigint">
-                <constraints primaryKey="false" nullable="false" unique="true"/>
-            </column>
-        </createTable>
-
-        <createTable tableName="stats">
-            <column name="stats_id" type="bigint" autoIncrement="true">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
             <column name="experience" type="bigint" defaultValue="0">
@@ -81,49 +84,25 @@
         </createTable>
 
         <addForeignKeyConstraint baseTableName="roster"
+                                 baseColumnNames="player_id"
+                                 constraintName="player_id_fkey"
+                                 referencedTableName="account"
+                                 referencedColumnNames="player_id"
+                                 onDelete="NO ACTION" onUpdate="NO ACTION"/>
+
+        <addForeignKeyConstraint baseTableName="roster"
                                  baseColumnNames="hero_id"
                                  constraintName="hero_id_fkey"
                                  referencedTableName="hero_base"
                                  referencedColumnNames="hero_id"
-                                 onDelete="NO ACTION" onUpdate="NO ACTION" />
+                                 onDelete="NO ACTION" onUpdate="NO ACTION"/>
 
-        <addForeignKeyConstraint baseTableName="account"
-                                 baseColumnNames="stats_id"
-                                 constraintName="stats_id_fkey"
-                                 referencedTableName="stats"
-                                 referencedColumnNames="stats_id"
-                                 onDelete="NO ACTION" onUpdate="NO ACTION" />
-
-
-        <createIndex catalogName="catalog"
-                     indexName="idx_player_stats"
-                     tableName="account"
-                     unique="true">
-            <column name="stats_id"/>
-        </createIndex>
-
-        <createIndex catalogName="catalog"
-                     indexName="idx_hero_stats"
-                     tableName="roster"
-                     unique="true">
-            <column name="stats_id"/>
-        </createIndex>
-
-        <createIndex catalogName="catalog"
-                     indexName="idx_hero_id"
-                     tableName="hero_base"
-                     unique="true">
+        <createIndex catalogName="catalog" indexName="idx_hero_id" tableName="hero_base" unique="true">
             <column name="hero_id"/>
         </createIndex>
 
-        <createIndex catalogName="catalog"
-                     indexName="idx_game_id"
-                     tableName="roster"
-                     unique="false">
-            <column name="game_id"/>
-        </createIndex>
 
-
+        <addUniqueConstraint columnNames="player_id, hero_id" constraintName="unique_roster_hero" tableName="roster"/>
     </changeSet>
 
 </databaseChangeLog>

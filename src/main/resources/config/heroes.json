@@ -3,66 +3,110 @@
     "hero_id": 1,
     "game_id": 2,
     "credits": 5000,
-    "description": "Dekker"
+    "description": "Dekker",
+    "health": 5000,
+    "mana": 4000,
+    "stamina": 3000,
+    "spawn_cost": 30
   },
   {
     "hero_id": 2,
     "game_id": 9,
     "credits": 7000,
-    "description": "Shinbi"
+    "description": "Shinbi",
+    "health": 5000,
+    "mana": 4000,
+    "stamina": 3000,
+    "spawn_cost": 30
   },
   {
     "hero_id": 3,
     "game_id": 8,
     "credits": 9000,
-    "description": "Rampage"
+    "description": "Rampage",
+    "health": 5000,
+    "mana": 4000,
+    "stamina": 3000,
+    "spawn_cost": 30
   },
   {
     "hero_id": 4,
     "game_id": 0,
     "credits": 9000,
-    "description": "Countess"
+    "description": "Countess",
+    "health": 5000,
+    "mana": 4000,
+    "stamina": 3000,
+    "spawn_cost": 30
   },
   {
     "hero_id": 5,
     "game_id": 1,
     "credits": 9000,
-    "description": "Crunch"
+    "description": "Crunch",
+    "health": 5000,
+    "mana": 4000,
+    "stamina": 3000,
+    "spawn_cost": 30
   },
   {
     "hero_id": 6,
     "game_id": 3,
     "credits": 9000,
-    "description": "Gadget"
+    "description": "Gadget",
+    "health": 5000,
+    "mana": 4000,
+    "stamina": 3000,
+    "spawn_cost": 30
   },
   {
     "hero_id": 7,
     "game_id": 4,
     "credits": 9000,
-    "description": "Grux"
+    "description": "Grux",
+    "health": 5000,
+    "mana": 4000,
+    "stamina": 3000,
+    "spawn_cost": 30
   },
   {
     "hero_id": 8,
     "game_id": 5,
     "credits": 9000,
-    "description": "Kwang"
+    "description": "Kwang",
+    "health": 5000,
+    "mana": 4000,
+    "stamina": 3000,
+    "spawn_cost": 30
   },
   {
     "hero_id": 9,
     "game_id": 6,
     "credits": 9000,
-    "description": "Murdock"
+    "description": "Murdock",
+    "health": 5000,
+    "mana": 4000,
+    "stamina": 3000,
+    "spawn_cost": 30
   },
   {
     "hero_id": 10,
     "game_id": 7,
     "credits": 9000,
-    "description": "Muriel"
+    "description": "Muriel",
+    "health": 5000,
+    "mana": 4000,
+    "stamina": 3000,
+    "spawn_cost": 30
   },
   {
     "hero_id": 11,
     "game_id": 10,
     "credits": 9000,
-    "description": "TwinBlast"
+    "description": "TwinBlast",
+    "health": 5000,
+    "mana": 4000,
+    "stamina": 3000,
+    "spawn_cost": 30
   }
 ]

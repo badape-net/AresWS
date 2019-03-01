@@ -34,7 +34,7 @@
                 <constraints nullable="false"/>
             </column>
             <column name="hero_id" type="bigint">
-                <constraints nullable="false" />
+                <constraints nullable="false"/>
             </column>
         </createTable>
 
@@ -43,15 +43,26 @@
                 <constraints primaryKey="true" nullable="false"/>
             </column>
             <column name="credits" type="bigint">
-                <constraints nullable="false"/>
+                <constraints nullable="false" />
             </column>
         </createTable>
+
         <addForeignKeyConstraint baseTableName="transactions"
                                  baseColumnNames="hero_id"
                                  constraintName="hero_id_fkey"
                                  referencedTableName="hero"
                                  referencedColumnNames="hero_id"
-                                 onDelete="NO ACTION" onUpdate="NO ACTION" />
+                                 onDelete="NO ACTION" onUpdate="NO ACTION"/>
+
+        <sql>
+            ALTER TABLE store.hero ADD CONSTRAINT hero_credits_check CHECK (credits >= 0)
+        </sql>
+        <sql>
+            ALTER TABLE store.transactions ADD CONSTRAINT hero_credits_check CHECK (credits >= 0)
+        </sql>
+        <sql>
+            ALTER TABLE store.account ADD CONSTRAINT hero_credits_check CHECK (credits >= 0)
+        </sql>
 
 
     </changeSet>

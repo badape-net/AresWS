@@ -4,6 +4,6 @@
     "user": "postgres",
     "password": "changeme",
     "driver_class": "org.postgresql.Driver",
-    "max_pool_size": 10
+    "max_pool_size": 30
   }
 }

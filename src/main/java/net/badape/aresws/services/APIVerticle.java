@@ -126,16 +126,11 @@ public class APIVerticle extends AbstractVerticle {
 
     private void buyHero(RoutingContext routingContext) {
         JsonObject body = routingContext.getBodyAsJson();
-
-        log.info("buyHero");
-
         JsonObject message = new JsonObject()
                 .put("playerId", body.getLong("playerId", null))
                 .put("heroId", body.getLong("heroId", -1L));
 
-        log.info("buyHero: " + message.encode());
-
-        eb.<JsonObject>send(EventTopic.GET_PLAYER_ROSTER, message, reply -> {
+        eb.<JsonObject>send(EventTopic.BUY_HERO, message, reply -> {
             if (reply.succeeded()) {
                 routingContext.response().setStatusMessage("OK").end(reply.result().body().encode());
             } else {
@@ -151,15 +146,15 @@ public class APIVerticle extends AbstractVerticle {
     private void failureHandler(RoutingContext routingContext) {
         // This is the failure handler
 
-        log.error("failureHandler: " + routingContext.failure().getMessage());
-        Throwable failure = routingContext.failure();
+//        log.error("failureHandler: " + routingContext.failure().getMessage());
+        String failure = routingContext.failure().getMessage();
 
         JsonObject reply = new JsonObject()
-                .put("message", failure.getMessage());
+                .put("message", failure);
 
         routingContext.response()
                 .setStatusCode(500)
-                .setStatusMessage(failure.getMessage())
+//                .setStatusMessage(failure.getMessage())
                 .end(reply.encode());
     }
 }
