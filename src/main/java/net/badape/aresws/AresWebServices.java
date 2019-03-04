@@ -3,6 +3,7 @@ package net.badape.aresws;
 import io.vertx.core.*;
 import io.vertx.core.json.JsonObject;
 import lombok.extern.slf4j.Slf4j;
+import net.badape.aresws.actors.HeroActor;
 import net.badape.aresws.actors.StatsActor;
 import net.badape.aresws.actors.PlayerActor;
 import net.badape.aresws.actors.StoreActor;
@@ -37,11 +38,16 @@ public class AresWebServices extends AbstractVerticle {
                 .setConfig(getDBConfig("stats", "classpath:db/stats.changelog.xml"))
                 .setWorker(true);
 
+        DeploymentOptions heroesOpts = new DeploymentOptions()
+                .setConfig(getDBConfig("heroes", "classpath:db/heroes.changelog.xml"))
+                .setWorker(true);
+
 
         final List<Future> lFutures = new ArrayList<>();
         lFutures.add(cycleHelper(LiquibaseVerticle.class.getName(), storeOpts));
         lFutures.add(cycleHelper(LiquibaseVerticle.class.getName(), playerOpts));
         lFutures.add(cycleHelper(LiquibaseVerticle.class.getName(), heroRosterOpts));
+        lFutures.add(cycleHelper(LiquibaseVerticle.class.getName(), heroesOpts));
 
         CompositeFuture.all(lFutures).setHandler(lRes -> {
             if (lRes.failed()) {
@@ -49,9 +55,10 @@ public class AresWebServices extends AbstractVerticle {
             } else {
                 log.info("schemas updates");
                 final List<Future> sFutures = new ArrayList<>();
-                sFutures.add(deployHelper(StoreActor.class.getName(), 5));
-                sFutures.add(deployHelper(PlayerActor.class.getName(), 5));
-                sFutures.add(deployHelper(StatsActor.class.getName(), 5));
+                sFutures.add(deployHelper(StoreActor.class.getName(), 1));
+                sFutures.add(deployHelper(PlayerActor.class.getName(), 1));
+                sFutures.add(deployHelper(StatsActor.class.getName(), 1));
+                sFutures.add(deployHelper(HeroActor.class.getName(), 1));
                 sFutures.add(deployHelper(APIVerticle.class.getName()));
 //                sFutures.add(deployHelper(TCPService.class.getName()));
 

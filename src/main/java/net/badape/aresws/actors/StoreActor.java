@@ -10,7 +10,6 @@ import io.vertx.core.json.JsonObject;
 import lombok.extern.slf4j.Slf4j;
 import net.badape.aresws.EventTopic;
 import net.badape.aresws.db.AbstractDataVerticle;
-import net.badape.aresws.db.SQL;
 
 @Slf4j
 public class StoreActor extends AbstractDataVerticle {
@@ -22,12 +21,9 @@ public class StoreActor extends AbstractDataVerticle {
         schema = "store";
 
         eb = vertx.eventBus();
-
         eb.<JsonObject>consumer(EventTopic.NEW_STORE_ACCOUNT, this::newStoreAccount);
-        eb.<JsonObject>consumer(EventTopic.GET_PLAYER_ROSTER, this::getPlayerRoster);
-        eb.<JsonObject>consumer(EventTopic.GET_HEROES, this::getHeroes);
-        eb.<JsonObject>consumer(EventTopic.BUY_HERO, this::buyHero);
-        eb.<JsonObject>consumer(EventTopic.GET_CREDITS, this::getCredits);
+        eb.<JsonObject>consumer(EventTopic.BUY_STORE_HERO, this::buyHero);
+        eb.<JsonObject>consumer(EventTopic.GET_STORE_CREDITS, this::getCredits);
 
         getConnection(result -> {
             if (result.succeeded()) {
@@ -43,15 +39,19 @@ public class StoreActor extends AbstractDataVerticle {
         getStats(message.body().getLong("playerId"), message::reply);
     }
 
+    private static final String SELECT_CREDITS = "SELECT credits FROM store.account WHERE player_id = ?";
+
     private void getStats(Long playerId, Handler<JsonObject> hndlr) {
         final JsonArray sqlParams = new JsonArray().add(playerId);
-        conn.queryWithParams(SQL.SELECT_CREDITS, sqlParams, qRes -> {
+        conn.queryWithParams(SELECT_CREDITS, sqlParams, qRes -> {
             if (qRes.failed()) {
                 hndlr.handle(new JsonObject());
             }
             hndlr.handle(qRes.result().getRows().get(0));
         });
     }
+
+    private static final String INSERT_NEW_ACCOUNT = "INSERT INTO store.account(player_id, credits) VALUES (?, ?)";
 
     private void newStoreAccount(Message<JsonObject> message) {
         final Long playerId = message.body().getLong("playerId");
@@ -63,7 +63,7 @@ public class StoreActor extends AbstractDataVerticle {
                 return;
             }
 
-            conn.updateWithParams(SQL.INSERT_NEW_ACCOUNT, sqlParams, cDevPlayer -> {
+            conn.updateWithParams(INSERT_NEW_ACCOUNT, sqlParams, cDevPlayer -> {
                 if (cDevPlayer.failed()) {
                     message.fail(500, cDevPlayer.cause().getMessage());
                     return;
@@ -86,6 +86,12 @@ public class StoreActor extends AbstractDataVerticle {
 
     }
 
+    private static final String UPSERT_HERO =
+            "INSERT INTO store.hero(hero_id, game_id, credits, description) VALUES (?, ?, ?, ?)" +
+                    "ON CONFLICT ON CONSTRAINT hero_pkey DO " +
+                    "UPDATE SET game_id=?, credits=?, description=? " +
+                    "WHERE hero.hero_id=?";
+
     private void loadData(Handler<AsyncResult<Void>> hndlr) {
 
         vertx.fileSystem().readFile("config/heroes.json", result -> {
@@ -105,7 +111,7 @@ public class StoreActor extends AbstractDataVerticle {
                     JsonArray sqlParams = new JsonArray()
                             .add(heroId).add(gameId).add(credits).add(description)
                             .add(gameId).add(credits).add(description).add(heroId);
-                    conn.updateWithParams(SQL.UPSERT_HERO, sqlParams, cPlayer -> {
+                    conn.updateWithParams(UPSERT_HERO, sqlParams, cPlayer -> {
                         if (result.failed()) {
                             log.error("failed to update: " + heroId);
                         }
@@ -116,56 +122,36 @@ public class StoreActor extends AbstractDataVerticle {
         });
     }
 
+    private final static String UPDATE_BUY_HERO =
+            "UPDATE store.account SET credits = credits - (SELECT credits FROM store.hero WHERE hero_id = ?) " +
+                    "WHERE player_id = ?";
+
     private void buyHero(Message<JsonObject> message) {
+        log.info("buyHero: " + message.body().encode());
+
         final Long playerId = message.body().getLong("playerId", null);
         final Long heroId = message.body().getLong("heroId", -1L);
 
         JsonArray buyParams = new JsonArray().add(heroId).add(playerId);
-        conn.updateWithParams(SQL.UPDATE_BUY_HERO, buyParams, buyResult -> {
+        conn.updateWithParams(UPDATE_BUY_HERO, buyParams, buyResult -> {
             if (buyResult.failed()) {
                 message.fail(500, buyResult.cause().getMessage());
                 return;
             }
+            getStats(playerId, mReply -> {
 
-            JsonObject jsonreply = new JsonObject().put("player_id", playerId).put("credits", 0);
+                eb.<JsonObject>send(EventTopic.NEW_ROSTER_HERO, message.body(), reply -> {
+                    if (reply.failed()) {
+                        message.fail(500, reply.cause().getMessage());
+                        return;
+                    }
+                    mReply.put("player_id", playerId);
+                    mReply.mergeIn(reply.result().body());
+                    message.reply(mReply);
+                });
 
-            eb.<JsonObject>send(EventTopic.NEW_ROSTER_HERO, message.body(), reply -> {
-                jsonreply.mergeIn(reply.result().body());
-                message.reply(jsonreply);
             });
         });
     }
 
-
-    private void getHeroes(Message<JsonObject> message) {
-
-        conn.query(SQL.SQL_HEROES, result -> {
-            if (result.failed()) {
-                message.fail(500, result.cause().getMessage());
-                return;
-            }
-
-            JsonObject hero = result.result().toJson();
-            hero.remove("results");
-            hero.remove("columnNames");
-            hero.remove("numColumns");
-
-            message.reply(hero);
-        });
-    }
-
-    private void getPlayerRoster(Message<JsonObject> message) {
-
-        JsonArray sqlParams = new JsonArray().add(message.body().getLong("playerId"));
-
-        conn.queryWithParams(SQL.SELECT_ROSTER, sqlParams, result -> {
-            if (result.failed()) {
-                message.fail(500, result.cause().getMessage());
-                return;
-            }
-
-            JsonArray reply = new JsonArray(result.result().getRows());
-            message.reply(reply);
-        });
-    }
 }

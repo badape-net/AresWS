@@ -9,7 +9,6 @@ import io.vertx.core.json.JsonObject;
 import lombok.extern.slf4j.Slf4j;
 import net.badape.aresws.EventTopic;
 import net.badape.aresws.db.AbstractDataVerticle;
-import net.badape.aresws.db.SQL;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,12 +27,22 @@ public class PlayerActor extends AbstractDataVerticle {
         getConnection(startFuture.completer());
     }
 
+    private final static String SELECT_DEVID = "SELECT dev_player.dev_id, dev_player.player_id " +
+            "FROM players.dev_player LEFT JOIN players.player ON dev_player.player_id=player.player_id " +
+            "WHERE dev_player.dev_id = ?";
+
+    private final static String CREATE_DEV_PLAYER = "INSERT INTO players.dev_player(dev_id, player_id) VALUES (?, ?)";
+
+    private final static String CREATE_PLAYER = "INSERT INTO players.player DEFAULT VALUES";
+
     private void newDevPlayer(Message<JsonObject> message) {
 
         final Long devId = message.body().getLong("playerId");
         JsonArray sqlParams = new JsonArray().add(devId);
 
-        conn.queryWithParams(SQL.SELECT_DEVID, sqlParams, result -> {
+        log.info("newDevPlayer: " + devId);
+
+        conn.queryWithParams(SELECT_DEVID, sqlParams, result -> {
             if (result.succeeded() && result.result().getNumRows() != 0) {
                 Long playerId = result.result().getRows().get(0).getLong("player_id");
 
@@ -41,8 +50,9 @@ public class PlayerActor extends AbstractDataVerticle {
 
                 JsonObject payload = new JsonObject().put("playerId", playerId);
 
-                futures.add(sendMessage(EventTopic.GET_CREDITS, payload));
-                futures.add(sendMessage(EventTopic.GET_STATS, payload));
+                futures.add(sendMessage(EventTopic.GET_STORE_CREDITS, payload));
+                futures.add(sendMessage(EventTopic.GET_PLAYER_STATS, payload));
+                futures.add(sendMessage(EventTopic.GET_PLAYER_ROSTER, payload));
 
                 CompositeFuture.all(futures).setHandler(fResult -> {
                     if (fResult.failed()) {
@@ -51,8 +61,9 @@ public class PlayerActor extends AbstractDataVerticle {
                     }
                     JsonObject storeRes = (JsonObject) futures.get(0).result();
                     JsonObject statsRes = (JsonObject) futures.get(1).result();
+                    JsonArray rosterRes = (JsonArray) futures.get(2).result();
 
-                    replyProfile(playerId, storeRes, statsRes, message);
+                    replyProfile(playerId, storeRes, statsRes, rosterRes, message);
 
                 });
             } else {
@@ -62,7 +73,7 @@ public class PlayerActor extends AbstractDataVerticle {
                         return;
                     }
 
-                    conn.update(SQL.CREATE_PLAYER, cPlayer -> {
+                    conn.update(CREATE_PLAYER, cPlayer -> {
                         if (cPlayer.failed()) {
                             message.fail(500, cPlayer.cause().getMessage());
                             return;
@@ -74,7 +85,7 @@ public class PlayerActor extends AbstractDataVerticle {
                                 .add(devId)
                                 .add(playerId);
 
-                        conn.updateWithParams(SQL.CREATE_DEV_PLAYER, sqlParams, cDevPlayer -> {
+                        conn.updateWithParams(CREATE_DEV_PLAYER, sqlParams, cDevPlayer -> {
                             if (cDevPlayer.failed()) {
                                 message.fail(500, cDevPlayer.cause().getMessage());
                                 return;
@@ -92,16 +103,21 @@ public class PlayerActor extends AbstractDataVerticle {
                                     conn.rollback(rRes -> {
                                         log.error(fResult.cause().getMessage());
                                         message.fail(500, fResult.cause().getMessage());
+                                        return;
                                     });
-                                } else {
-                                    conn.commit(cRes -> {
+                                }
+
+                                conn.commit(cRes -> {
+                                    eb.<JsonArray>send(EventTopic.GET_PLAYER_ROSTER, payload, response -> {
                                         final JsonObject storeRes = (JsonObject) futures.get(0).result();
                                         final JsonObject statsRes = (JsonObject) futures.get(1).result();
                                         final Long newPlayerId = cPlayer.result().getKeys().getLong(0);
+                                        final JsonArray rosRes = response.result().body();
 
-                                        replyProfile(newPlayerId, storeRes, statsRes, message);
+                                        replyProfile(newPlayerId, storeRes, statsRes, rosRes, message);
                                     });
-                                }
+                                });
+
                             });
                         });
                     });
@@ -113,28 +129,17 @@ public class PlayerActor extends AbstractDataVerticle {
     }
 
     private void replyProfile(final Long playerId, final JsonObject storeRes, final JsonObject statsRes,
-                              final Message<JsonObject> message) {
+                              final JsonArray rosterRes, final Message<JsonObject> message) {
 
         JsonObject reply = new JsonObject()
-                .put("playerId", playerId)
+                .put("player_id", playerId)
                 .put("credits", storeRes.getLong("credits"))
+                .put("roster", rosterRes)
                 .put("stats", statsRes);
 
+        log.info(reply.encode());
+
         message.reply(reply);
-    }
-
-    private Future<JsonObject> sendMessage(final String topic, final JsonObject message) {
-        Future<JsonObject> future = Future.future();
-
-        eb.<JsonObject>send(topic, message, reply -> {
-            if (reply.failed()) {
-                future.fail(reply.cause());
-            } else {
-                future.complete(reply.result().body());
-            }
-        });
-
-        return future;
     }
 
 }
