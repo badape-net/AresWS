@@ -47,13 +47,14 @@ public class LiquibaseVerticle extends AbstractVerticle {
             Liquibase liquibase = new Liquibase(changeLogFile, resourceAccessor, db);
             liquibase.update(new Contexts(), new LabelExpression());
 
+            startFuture.complete();
         } catch (LiquibaseException | SQLException ex) {
             log.error(ex.getMessage());
             startFuture.fail(ex.getCause());
         } finally {
             closeDatabase();
             log.info("completing schema updates");
-            startFuture.complete();
+
         }
     }
 
@@ -73,7 +74,6 @@ public class LiquibaseVerticle extends AbstractVerticle {
     private void closeDatabase() {
         if (db != null) try {
             log.info("closing db");
-//            liquibaseDbConnection.close();
             db.close();
         } catch (DatabaseException e) {
             log.error("unable to close database " + db + " exception:" + e.getMessage());

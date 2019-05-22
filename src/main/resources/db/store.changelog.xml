@@ -12,59 +12,149 @@
     <changeSet id="1" author="badape">
 
         <createTable tableName="hero">
-            <column name="hero_id" type="bigint" autoIncrement="true">
+            <column name="hero_pk" type="bigint" autoIncrement="true">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
-            <column name="game_id" type="bigint">
-                <constraints unique="false" nullable="false"/>
+            <column name="game_idx" type="bigint">
+                <constraints unique="true" nullable="false"/>
+            </column>
+            <column name="title" type="varchar(50)">
+                <constraints nullable="false"/>
             </column>
             <column name="credits" type="bigint">
                 <constraints nullable="false"/>
             </column>
-            <column name="description" type="varchar(50)">
+            <column name="description" type="longtext">
                 <constraints nullable="false"/>
             </column>
-        </createTable>
-
-        <createTable tableName="transactions">
-            <column name="transaction_id" type="bigint" autoIncrement="true">
-                <constraints primaryKey="true" nullable="false"/>
-            </column>
-            <column name="credits" type="bigint">
+            <column name="health" type="bigint">
                 <constraints nullable="false"/>
             </column>
-            <column name="hero_id" type="bigint">
+            <column name="mana" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="stamina" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="spawn_cost" type="bigint">
                 <constraints nullable="false"/>
             </column>
         </createTable>
 
         <createTable tableName="account">
-            <column name="player_id" type="bigint" autoIncrement="true">
+            <column name="account_pk" type="bigint" autoIncrement="true">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
-            <column name="credits" type="bigint">
+            <column name="balance" type="bigint">
                 <constraints nullable="false" />
             </column>
         </createTable>
 
-        <addForeignKeyConstraint baseTableName="transactions"
-                                 baseColumnNames="hero_id"
-                                 constraintName="hero_id_fkey"
-                                 referencedTableName="hero"
-                                 referencedColumnNames="hero_id"
-                                 onDelete="NO ACTION" onUpdate="NO ACTION"/>
+        <createTable tableName="roster">
+            <column name="account_fk" type="bigint">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="hero_fk" type="bigint">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="level" type="bigint" defaultValueNumeric="1">
+                <constraints nullable="false"/>
+            </column>
+            <column name="experience" type="bigint" defaultValue="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="kills" type="bigint" defaultValue="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="deaths" type="bigint" defaultValue="0">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addForeignKeyConstraint
+                constraintName="roster_account_fk"
+                baseTableName="roster"
+                baseColumnNames="account_fk"
+                referencedTableName="account"
+                referencedColumnNames="account_pk"
+                onDelete="NO ACTION" onUpdate="NO ACTION"/>
+
+        <addForeignKeyConstraint
+                constraintName="roster_hero_fk"
+                baseTableName="roster"
+                baseColumnNames="hero_fk"
+                referencedTableName="hero"
+                referencedColumnNames="hero_pk"
+                onDelete="NO ACTION" onUpdate="NO ACTION"/>
+
+
+        <createIndex catalogName="catalog" indexName="idx_hero_pk" tableName="hero" unique="true">
+            <column name="hero_pk"/>
+        </createIndex>
+
+        <createIndex catalogName="catalog" indexName="idx_account_pk" tableName="account" unique="true">
+            <column name="account_pk"/>
+        </createIndex>
+
+        <createIndex catalogName="catalog" indexName="idx_roster_pk" tableName="roster" unique="true">
+            <column name="account_fk"/>
+            <column name="hero_fk"/>
+        </createIndex>
 
         <sql>
             ALTER TABLE store.hero ADD CONSTRAINT hero_credits_check CHECK (credits >= 0)
         </sql>
         <sql>
-            ALTER TABLE store.transactions ADD CONSTRAINT hero_credits_check CHECK (credits >= 0)
+            ALTER TABLE store.account ADD CONSTRAINT hero_credits_check CHECK (balance >= 0)
         </sql>
         <sql>
-            ALTER TABLE store.account ADD CONSTRAINT hero_credits_check CHECK (credits >= 0)
+            ALTER TABLE store.hero ADD CONSTRAINT hero_health_check CHECK (health >= 0)
+        </sql>
+        <sql>
+            ALTER TABLE store.hero ADD CONSTRAINT hero_mana_check CHECK (mana >= 0)
+        </sql>
+        <sql>
+            ALTER TABLE store.hero ADD CONSTRAINT hero_stamina_check CHECK (stamina >= 0)
+        </sql>
+        <sql>
+            ALTER TABLE store.hero ADD CONSTRAINT hero_spawn_cost_check CHECK (spawn_cost >= 0)
         </sql>
 
+    </changeSet>
 
+    <changeSet id="2" author="badape">
+        <createView catalogName="cat"
+                    replaceIfExists="true"
+                    schemaName="store"
+                    viewName="roster_view">
+            SELECT * FROM store.account
+            CROSS JOIN store.hero
+            FULL OUTER JOIN store.roster ON roster.hero_fk=hero.hero_pk AND roster.account_fk = account.account_pk
+        </createView>
+    </changeSet>
+
+    <changeSet id="3" author="badape">
+        <createProcedure>
+            CREATE OR REPLACE FUNCTION store.roster_view_insert_proc() RETURNS trigger AS
+            $$
+            DECLARE account_id integer;
+            BEGIN
+
+            UPDATE store.account SET balance = balance - (SELECT credits FROM store.hero WHERE hero_pk = NEW.hero_fk) WHERE account_pk = NEW.account_pk;
+            INSERT INTO store.roster(account_fk, hero_fk) VALUES (NEW.account_pk, NEW.hero_fk);
+
+            RETURN NEW;
+            EXCEPTION WHEN unique_violation THEN
+            RAISE EXCEPTION 'Duplicate insufficient funds or already in roster';
+            END;
+            $$
+            LANGUAGE 'plpgsql';
+        </createProcedure>
+        <sql>
+            CREATE TRIGGER roster_insert_trg
+            INSTEAD OF INSERT ON store.roster_view FOR EACH ROW EXECUTE PROCEDURE
+            store.roster_view_insert_proc();
+        </sql>
     </changeSet>
 
 </databaseChangeLog>

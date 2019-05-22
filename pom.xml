@@ -12,7 +12,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
-        <vertx.version>3.6.3</vertx.version>
+        <vertx.version>3.7.0</vertx.version>
 
         <verticle.name>net.badape.aresws.AresWebServices</verticle.name>
 
@@ -26,8 +26,8 @@
         <fabric8.service.port>80</fabric8.service.port>
         <fabric8.service.containerPort>${docker.port.container.http}</fabric8.service.containerPort>
 
-        <junit-jupiter.version>5.1.0</junit-jupiter.version>
-        <assertj-core.version>3.8.0</assertj-core.version>
+        <junit-jupiter.version>5.4.2</junit-jupiter.version>
+        <assertj-core.version>3.12.2</assertj-core.version>
         <maven-surefire-plugin.version>2.19</maven-surefire-plugin.version>
         <junit-platform-surefire-provider.version>1.0.1</junit-platform-surefire-provider.version>
     </properties>
@@ -37,6 +37,12 @@
         <dependency>
             <groupId>io.vertx</groupId>
             <artifactId>vertx-web</artifactId>
+            <version>${vertx.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>io.vertx</groupId>
+            <artifactId>vertx-web-client</artifactId>
             <version>${vertx.version}</version>
         </dependency>
 
@@ -82,12 +88,6 @@
         <!-- Test dependencies -->
         <dependency>
             <groupId>io.vertx</groupId>
-            <artifactId>vertx-web-client</artifactId>
-            <version>${vertx.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>io.vertx</groupId>
             <artifactId>vertx-junit5</artifactId>
             <version>${vertx.version}</version>
             <scope>test</scope>
@@ -115,6 +115,12 @@
             <artifactId>junit-jupiter-engine</artifactId>
             <version>${junit-jupiter.version}</version>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.vertx</groupId>
+            <artifactId>vertx-web-client</artifactId>
+            <version>3.7.0</version>
+            <scope>compile</scope>
         </dependency>
     </dependencies>
 

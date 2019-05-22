@@ -1,13 +1,12 @@
 package net.badape.aresws.db;
 
-import io.vertx.core.AbstractVerticle;
-import io.vertx.core.AsyncResult;
-import io.vertx.core.Future;
-import io.vertx.core.Handler;
+import io.vertx.core.*;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.jdbc.JDBCClient;
 import io.vertx.ext.sql.SQLClient;
 import io.vertx.ext.sql.SQLConnection;
+import io.vertx.ext.sql.UpdateResult;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -15,6 +14,35 @@ public abstract class AbstractDataVerticle extends AbstractVerticle {
 
     protected SQLConnection conn;
     protected String schema = "public";
+
+    protected Future<UpdateResult> sqlTransaction(String sqlStatement, JsonArray sqlParams) {
+        Future<UpdateResult> future = Future.future();
+
+        conn.setAutoCommit(false, rTx -> {
+            if (rTx.failed()) {
+                log.error(rTx.cause().getMessage());
+                future.fail(rTx.cause());
+            }
+
+            log.info(sqlStatement + " : "+ sqlParams.encode());
+
+            conn.updateWithParams(sqlStatement, sqlParams, updateResult -> {
+                if (updateResult.failed()) {
+                    log.error(updateResult.cause().getMessage());
+                    future.fail(updateResult.cause());
+                }
+
+                conn.commit(commitResult -> {
+                    if (commitResult.failed()) {
+                        log.error(commitResult.cause().getMessage());
+                        future.fail(commitResult.cause());
+                    }
+                    future.complete(updateResult.result());
+                });
+            });
+        });
+        return future;
+    }
 
     private JsonObject getJDBCConfig() {
         JsonObject dbConfig = config().getJsonObject("db", new JsonObject());
@@ -58,5 +86,32 @@ public abstract class AbstractDataVerticle extends AbstractVerticle {
         });
 
         return future;
+    }
+
+    protected Future<Void> liquibaseCycle(String name, DeploymentOptions options) {
+        Future<Void> future = Future.future();
+
+        vertx.deployVerticle(name, options, res -> {
+            if (res.failed()) {
+                future.fail(res.cause());
+            } else {
+                vertx.undeploy(res.result(), future);
+            }
+        });
+
+        return future;
+    }
+
+    protected JsonObject getDBConfig(String schema, String changeLogFile) {
+        JsonObject dbConfig = config().getJsonObject("db", new JsonObject());
+
+        return new JsonObject()
+                .put("url", dbConfig.getString("url", "jdbc:postgresql://localhost:5432/ares"))
+                .put("user", dbConfig.getString("user", "postgres"))
+                .put("password", dbConfig.getString("password", "changeme"))
+                .put("driver_class", dbConfig.getString("driver_class", "org.postgresql.Driver"))
+                .put("schema", schema)
+                .put("changeLogFile", changeLogFile)
+                .put("max_pool_size", dbConfig.getInteger("max_pool_size", 30));
     }
 }

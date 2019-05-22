@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd
+        http://www.liquibase.org/xml/ns/dbchangelog-ext
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd">
+
+    <changeSet id="1" author="badape">
+        <createTable tableName="account">
+            <column name="account_pk" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="account_created" defaultValueComputed="now()" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createTable tableName="dev_account">
+            <column name="dev_account_pk" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="account_fk" type="bigint">
+                <constraints nullable="false" />
+            </column>
+            <column name="dev_created" defaultValueComputed="now()" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addForeignKeyConstraint baseTableName="dev_account"
+                                 baseColumnNames="account_fk"
+                                 constraintName="account_fk_fkey"
+                                 referencedTableName="account"
+                                 referencedColumnNames="account_pk"
+                                 onDelete="NO ACTION"
+                                 onUpdate="NO ACTION" />
+
+    </changeSet>
+
+    <changeSet id="2" author="badape">
+        <createView catalogName="cat"
+                    replaceIfExists="true"
+                    schemaName="account"
+                    viewName="dev_account_view">
+            SELECT * FROM account.dev_account FULL OUTER JOIN account.account ON account.account_pk = dev_account.account_fk
+        </createView>
+    </changeSet>
+
+    <changeSet id="3" author="badape">
+        <createProcedure>
+            CREATE OR REPLACE FUNCTION account.dev_account_view_insert_proc() RETURNS trigger AS
+            $$
+            DECLARE account_id integer;
+            BEGIN
+
+            INSERT INTO account.account DEFAULT VALUES RETURNING account_pk INTO account_id;
+            INSERT INTO account.dev_account(dev_account_pk, account_fk) VALUES (NEW.dev_account_pk, account_id);
+
+            NEW.account_fk = account_id;
+
+            RETURN NEW;
+            EXCEPTION WHEN unique_violation THEN
+            RAISE EXCEPTION 'Duplicate account or dev_account id';
+            END;
+            $$
+            LANGUAGE 'plpgsql';
+        </createProcedure>
+        <sql>
+            CREATE TRIGGER dev_account_view_insert_trg
+            INSTEAD OF INSERT ON account.dev_account_view FOR EACH ROW EXECUTE PROCEDURE
+            account.dev_account_view_insert_proc();
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>

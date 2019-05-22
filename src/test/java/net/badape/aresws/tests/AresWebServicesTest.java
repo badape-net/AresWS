@@ -21,7 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Slf4j
 @DisplayName("👋 A fairly basic test example")
 @ExtendWith(VertxExtension.class)
-public class PlayerActorTest {
+public class AresWebServicesTest {
 
     @DisplayName("➡️ A nested test with customized lifecycle")
     @Nested
@@ -31,14 +31,17 @@ public class PlayerActorTest {
 
         @BeforeEach
         void prepare() {
-            vertx = Vertx.vertx(new VertxOptions()
+            VertxOptions opts = new VertxOptions()
                     .setMaxEventLoopExecuteTime(10000)
-                    .setPreferNativeTransport(true)
-                    .setFileResolverCachingEnabled(true));
+                    .setPreferNativeTransport(true);
+            opts.getFileSystemOptions().setFileCachingEnabled(true);
+
+            vertx = Vertx.vertx(opts);
+
         }
 
         @Test
-        @DisplayName("⬆️ Deploy SampleVerticle")
+        @DisplayName("⬆️ Deploy HeroStoreActor")
         void deploySampleVerticle(VertxTestContext testContext) {
             vertx.deployVerticle(new AresWebServices(), testContext.succeeding(id -> testContext.completeNow()));
         }
