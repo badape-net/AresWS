@@ -46,33 +46,33 @@ public class AresWebServicesTest {
             vertx.deployVerticle(new AresWebServices(), testContext.succeeding(id -> testContext.completeNow()));
         }
 
-        @Test
-        @Timeout(value = 60000, timeUnit = TimeUnit.SECONDS)
-        @DisplayName("🛂 Make a HTTP client request to SampleVerticle")
-        void httpRequest(VertxTestContext testContext) {
-            WebClient webClient = WebClient.create(vertx);
-            int maxCount = 100;
-            Checkpoint deploymentCheckpoint = testContext.checkpoint();
-            Checkpoint requestCheckpoint = testContext.checkpoint(maxCount);
-
-            vertx.deployVerticle(new AresWebServices(), testContext.succeeding(id -> {
-                deploymentCheckpoint.flag();
-
-                vertx.setPeriodic(1, timer -> {
-                    final long generatedLong = new Random().nextLong() & 0xffffffffL;
-
-                    webClient.get(8765, "localhost", "/player/dev/" + generatedLong)
-                            .as(BodyCodec.string())
-                            .send(testContext.succeeding(resp -> {
-                                testContext.verify(() -> {
-                                    assertThat(resp.statusCode()).isEqualTo(200);
-                                    assertThat(resp.body()).contains("playerId");
-                                    requestCheckpoint.flag();
-                                });
-                            }));
-                });
-            }));
-        }
+//        @Test
+//        @Timeout(value = 60000, timeUnit = TimeUnit.SECONDS)
+//        @DisplayName("🛂 Make a HTTP client request to SampleVerticle")
+//        void httpRequest(VertxTestContext testContext) {
+//            WebClient webClient = WebClient.create(vertx);
+//            int maxCount = 100;
+//            Checkpoint deploymentCheckpoint = testContext.checkpoint();
+//            Checkpoint requestCheckpoint = testContext.checkpoint(maxCount);
+//
+//            vertx.deployVerticle(new AresWebServices(), testContext.succeeding(id -> {
+//                deploymentCheckpoint.flag();
+//
+//                vertx.setPeriodic(1, timer -> {
+//                    final long generatedLong = new Random().nextLong() & 0xffffffffL;
+//
+//                    webClient.get(8765, "localhost", "/player/dev/" + generatedLong)
+//                            .as(BodyCodec.string())
+//                            .send(testContext.succeeding(resp -> {
+//                                testContext.verify(() -> {
+//                                    assertThat(resp.statusCode()).isEqualTo(200);
+//                                    assertThat(resp.body()).contains("playerId");
+//                                    requestCheckpoint.flag();
+//                                });
+//                            }));
+//                });
+//            }));
+//        }
 
         @AfterEach
         void cleanup() {

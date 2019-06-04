@@ -76,4 +76,52 @@
         </sql>
     </changeSet>
 
+    <changeSet id="4" author="badape">
+
+        <createTable tableName="device_account">
+            <column name="device_account_pk" type="varchar(255)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="account_fk" type="bigint">
+                <constraints nullable="false" />
+            </column>
+            <column name="device_created" defaultValueComputed="now()" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createView catalogName="cat"
+                    replaceIfExists="true"
+                    schemaName="account"
+                    viewName="device_account_view">
+            SELECT * FROM account.device_account FULL OUTER JOIN account.account ON account.account_pk = device_account.account_fk
+        </createView>
+
+        <createProcedure>
+            CREATE OR REPLACE FUNCTION account.device_account_view_insert_proc() RETURNS trigger AS
+            $$
+            DECLARE account_id integer;
+            BEGIN
+
+            INSERT INTO account.account DEFAULT VALUES RETURNING account_pk INTO account_id;
+            INSERT INTO account.device_account(device_account_pk, account_fk)
+                VALUES (NEW.device_account_pk, account_id);
+
+            NEW.account_fk = account_id;
+
+            RETURN NEW;
+            EXCEPTION WHEN unique_violation THEN
+            RAISE EXCEPTION 'Duplicate account or device_account id';
+            END;
+            $$
+            LANGUAGE 'plpgsql';
+        </createProcedure>
+        <sql>
+            CREATE TRIGGER device_account_view_insert_trg
+            INSTEAD OF INSERT ON account.device_account_view FOR EACH ROW EXECUTE PROCEDURE
+            account.device_account_view_insert_proc();
+        </sql>
+
+    </changeSet>
+
 </databaseChangeLog>

@@ -36,6 +36,9 @@ public class APIVerticle extends AbstractVerticle {
             OpenAPI3RouterFactory routerFactory = openAPI3RouterFactoryAsyncResult.result();
             // Add an handler with operationId
 
+            routerFactory.addHandlerByOperationId("getTeam", this::getTeam);
+            routerFactory.addFailureHandlerByOperationId("getTeam", this::failureHandler);
+
             routerFactory.addHandlerByOperationId("getAccountRoster", this::getAccountRoster);
             routerFactory.addFailureHandlerByOperationId("getAccountRoster", this::failureHandler);
 
@@ -73,12 +76,30 @@ public class APIVerticle extends AbstractVerticle {
 
     private HttpServerOptions getHttpServerOptions() {
         HttpServerOptions options = new HttpServerOptions();
-        options.setHost(config().getString("http.host", "localhost"));
+        options.setHost(config().getString("http.host", "0.0.0.0"));
         options.setPort(config().getInteger("http.port", 8765));
         return options;
     }
 
+    private void getTeam(RoutingContext routingContext) {
+        log.info("getTeam");
+
+        String account = routingContext.getCookie("account").getValue();
+        JsonObject message = new JsonObject()
+                .put("accountId", Long.parseLong(account));
+
+        eb.<JsonObject>send(EventTopic.GET_TEAM, message, reply -> {
+            if (reply.succeeded()) {
+                routingContext.response().setStatusMessage("OK").end(reply.result().body().encode());
+            } else {
+                routingContext.fail(reply.cause());
+            }
+        });
+
+    }
+
     private void getAccountRoster(RoutingContext routingContext) {
+        log.info("getAccountRoster");
         String account = routingContext.getCookie("account").getValue();
         JsonObject message = new JsonObject()
                 .put("accountId", Long.parseLong(account));
@@ -109,18 +130,54 @@ public class APIVerticle extends AbstractVerticle {
     }
 
     private void securityHandler(RoutingContext routingContext) {
-        String platform = routingContext.request().getHeader("X-PLATFORM-KEY");
-        JsonObject message = new JsonObject()
-                .put("devId", Long.parseLong(routingContext.pathParam("account")));
 
+
+        String platform = routingContext.request().getHeader("X-PLATFORM-KEY");
+
+        log.info("securityHandler: "+ platform);
+
+        JsonObject message;
         switch (platform) {
             case "dev":
+                log.info("dev!");
+                message = new JsonObject()
+                        .put("devId", Long.parseLong(routingContext.pathParam("account")));
+
                 eb.<JsonObject>send(EventTopic.GET_DEV_ACCOUNT, message, result -> {
 
                     Long accountId = result.result().body().getLong("accountId");
                     routingContext.addCookie(Cookie.cookie("account", accountId.toString()));
 
                     if (result.result().body().getBoolean("new", false)) {
+                        JsonObject newAccount = new JsonObject().put("accountId", accountId);
+
+                        eb.<JsonObject>send(EventTopic.NEW_ACCOUNT, newAccount, accResult -> {
+                            if (accResult.failed()) {
+                                routingContext.fail(500, accResult.cause());
+                            } else {
+                                routingContext.next();
+                            }
+                        });
+                    } else {
+                        routingContext.next();
+                    }
+                });
+                break;
+            case "device":
+                log.info("device!");
+                message = new JsonObject()
+                        .put("deviceId", routingContext.pathParam("account"));
+
+                eb.<JsonObject>send(EventTopic.GET_DEVICE_ACCOUNT, message, result -> {
+
+                    log.info(result.result().body().encode());
+
+                    Long accountId = result.result().body().getLong("accountId");
+                    routingContext.addCookie(Cookie.cookie("account", accountId.toString()));
+
+                    if (result.result().body().getBoolean("new", false)) {
+                        log.info("create new store account");
+
                         JsonObject newAccount = new JsonObject().put("accountId", accountId);
 
                         eb.<JsonObject>send(EventTopic.NEW_ACCOUNT, newAccount, accResult -> {
@@ -144,10 +201,10 @@ public class APIVerticle extends AbstractVerticle {
     private void failureHandler(RoutingContext routingContext) {
         String failure = routingContext.failure().getMessage();
 
-        log.info("failure "+ failure);
+        log.error("failure "+ failure);
 
         JsonObject reply = new JsonObject()
-                .put("message", failure);
+                .put("error", failure);
 
         routingContext.response()
                 .setStatusCode(500)

@@ -26,7 +26,7 @@ public class AresWebServices extends AbstractVerticle {
         final List<Future> sFutures = new ArrayList<>();
         sFutures.add(deployHelper(HeroStoreActor.class.getName(), 1));
         sFutures.add(deployHelper(AccountActor.class.getName(), 1));
-                sFutures.add(deployHelper(APIVerticle.class.getName()));
+        sFutures.add(deployHelper(APIVerticle.class.getName()));
 //                sFutures.add(deployHelper(TCPService.class.getName()));
 
         CompositeFuture.join(sFutures).setHandler(result -> {

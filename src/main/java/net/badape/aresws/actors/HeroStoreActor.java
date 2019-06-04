@@ -26,11 +26,6 @@ public class HeroStoreActor extends AbstractDataVerticle {
     public void start(Future<Void> startFuture) {
         schema = "store";
 
-        eb = vertx.eventBus();
-        eb.<JsonObject>consumer(EventTopic.NEW_ACCOUNT, this::newAccount);
-        eb.<JsonObject>consumer(EventTopic.BUY_HERO, this::buyHero);
-        eb.<JsonObject>consumer(EventTopic.GET_ROSTER, this::getRoster);
-
         DeploymentOptions liquiOpts = new DeploymentOptions()
                 .setConfig(getDBConfig("store", "classpath:db/store.changelog.xml"))
                 .setWorker(true);
@@ -44,6 +39,12 @@ public class HeroStoreActor extends AbstractDataVerticle {
                 getConnection(result -> {
                     if (result.succeeded()) {
                         loadData(startFuture);
+                        eb = vertx.eventBus();
+                        eb.<JsonObject>consumer(EventTopic.NEW_ACCOUNT, this::newAccount);
+                        eb.<JsonObject>consumer(EventTopic.BUY_HERO, this::buyHero);
+                        eb.<JsonObject>consumer(EventTopic.GET_ROSTER, this::getRoster);
+                        eb.<JsonObject>consumer(EventTopic.GET_TEAM, this::getTeam);
+
                     } else {
                         startFuture.fail(result.cause());
                     }
@@ -52,14 +53,35 @@ public class HeroStoreActor extends AbstractDataVerticle {
         });
     }
 
+    private static final String SELECT_TEAM =
+            "SELECT game_idx, level, experience FROM store.roster_view WHERE account_fk IS NOT NULL AND account_pk = ?";
+
+
+    private void getTeam(Message<JsonObject> message) {
+
+        final Long accountId = message.body().getLong("accountId");
+        final JsonArray sqlParams = new JsonArray().add(accountId);
+
+        conn.queryWithParams(SELECT_TEAM, sqlParams, result -> {
+            if (result.failed()) {
+                log.error(result.cause().getMessage());
+                message.fail(500, result.cause().getMessage());
+                return;
+            }
+
+            JsonObject response = new JsonObject().put("data", new JsonArray(result.result().getRows()));
+
+            message.reply(response);
+        });
+
+    }
+
     private static final String SELECT_ROSTER =
-            "SELECT hero_pk, game_idx, balance, level, experience, kills, deaths, credits, health, mana, stamina, spawn_cost FROM store.roster_view WHERE roster_view.account_pk = ?";
+            "SELECT title, hero_pk, game_idx, balance, level, experience, kills, deaths, credits, health, mana, stamina, spawn_cost FROM store.roster_view WHERE roster_view.account_pk = ?";
 
     private void getRoster(Message<JsonObject> message) {
         final Long accountId = message.body().getLong("accountId");
         final JsonArray sqlParams = new JsonArray().add(accountId);
-
-        log.info(message.body().encode());
 
         conn.queryWithParams(SELECT_ROSTER, sqlParams, result -> {
             if (result.failed()) {
@@ -69,7 +91,6 @@ public class HeroStoreActor extends AbstractDataVerticle {
             }
 
             JsonObject response = new JsonObject().put("data", new JsonArray(result.result().getRows()));
-            log.info(response.encode());
 
             message.reply(response);
         });
@@ -78,7 +99,6 @@ public class HeroStoreActor extends AbstractDataVerticle {
     private static final String INSERT_NEW_ACCOUNT = "INSERT INTO store.account(account_pk, balance) VALUES (?, ?)";
 
     private void newAccount(Message<JsonObject> message) {
-        log.info("new Account");
         final Long accountId = message.body().getLong("accountId");
         final JsonArray sqlParams = new JsonArray().add(accountId).add(1000000);
 
@@ -117,6 +137,7 @@ public class HeroStoreActor extends AbstractDataVerticle {
             "INSERT INTO store.roster_view(account_pk, hero_fk) VALUES (?,?)";
 
     private void buyHero(Message<JsonObject> message) {
+
         final Long accountId = message.body().getLong("accountId", null);
         final Long heroId = message.body().getLong("heroId", -1L);
 
@@ -139,8 +160,6 @@ public class HeroStoreActor extends AbstractDataVerticle {
             if (ar.succeeded()) {
                 // Obtain response
                 HttpResponse<Buffer> response = ar.result();
-
-                log.info("Received response with status code" + response.statusCode());
 
                 JsonArray heroConfig = response.bodyAsJsonObject().getJsonObject("data").getJsonArray("items");
                 final List<Future> lFutures = new ArrayList<>();
