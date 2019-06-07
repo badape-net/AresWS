@@ -54,7 +54,7 @@ public class HeroStoreActor extends AbstractDataVerticle {
     }
 
     private static final String SELECT_TEAM =
-            "SELECT game_idx, level, experience FROM store.roster_view WHERE account_fk IS NOT NULL AND account_pk = ?";
+            "SELECT title, level, experience FROM store.roster_view WHERE account_fk IS NOT NULL AND account_pk = ?";
 
 
     private void getTeam(Message<JsonObject> message) {
