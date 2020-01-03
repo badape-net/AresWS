@@ -6,13 +6,13 @@
     <description>Player Services</description>
     <groupId>net.badape</groupId>
     <artifactId>aresws</artifactId>
-    <version>1.1.1</version>
+    <version>1.1.2</version>
     <packaging>jar</packaging>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
-        <vertx.version>3.7.0</vertx.version>
+        <vertx.version>3.8.4</vertx.version>
 
         <verticle.name>net.badape.aresws.AresWebServices</verticle.name>
 
@@ -37,6 +37,12 @@
         <dependency>
             <groupId>io.vertx</groupId>
             <artifactId>vertx-web</artifactId>
+            <version>${vertx.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>io.vertx</groupId>
+            <artifactId>vertx-config</artifactId>
             <version>${vertx.version}</version>
         </dependency>
 
@@ -67,21 +73,7 @@
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
-            <version>42.2.5</version>
-        </dependency>
-
-        <!-- https://mvnrepository.com/artifact/org.projectlombok/lombok -->
-        <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-            <version>1.18.0</version>
-            <scope>provided</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.liquibase</groupId>
-            <artifactId>liquibase-core</artifactId>
-            <version>3.6.3</version>
+            <version>42.2.9</version>
         </dependency>
 
 
@@ -119,7 +111,7 @@
         <dependency>
             <groupId>io.vertx</groupId>
             <artifactId>vertx-web-client</artifactId>
-            <version>3.7.0</version>
+            <version>${vertx.version}</version>
             <scope>compile</scope>
         </dependency>
     </dependencies>

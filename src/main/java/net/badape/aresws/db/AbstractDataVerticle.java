@@ -3,61 +3,50 @@ package net.badape.aresws.db;
 import io.vertx.core.*;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import io.vertx.core.logging.Logger;
+import io.vertx.core.logging.LoggerFactory;
 import io.vertx.ext.jdbc.JDBCClient;
 import io.vertx.ext.sql.SQLClient;
 import io.vertx.ext.sql.SQLConnection;
 import io.vertx.ext.sql.UpdateResult;
-import lombok.extern.slf4j.Slf4j;
 
-@Slf4j
 public abstract class AbstractDataVerticle extends AbstractVerticle {
 
+    private final Logger log = LoggerFactory.getLogger( AbstractDataVerticle.class );
+
+    protected SQLClient sqlClient;
     protected SQLConnection conn;
     protected String schema = "public";
 
-    protected Future<UpdateResult> sqlTransaction(String sqlStatement, JsonArray sqlParams) {
-        Future<UpdateResult> future = Future.future();
+    protected Future<UpdateResult> sqlTransaction(final String sqlStatement, JsonArray sqlParams) {
+        Promise<UpdateResult> promise = Promise.promise();
 
         conn.setAutoCommit(false, rTx -> {
             if (rTx.failed()) {
                 log.error(rTx.cause().getMessage());
-                future.fail(rTx.cause());
+                promise.fail(rTx.cause());
             }
-
-            log.info(sqlStatement + " : "+ sqlParams.encode());
 
             conn.updateWithParams(sqlStatement, sqlParams, updateResult -> {
                 if (updateResult.failed()) {
                     log.error(updateResult.cause().getMessage());
-                    future.fail(updateResult.cause());
+                    promise.fail(updateResult.cause());
                 }
 
                 conn.commit(commitResult -> {
                     if (commitResult.failed()) {
                         log.error(commitResult.cause().getMessage());
-                        future.fail(commitResult.cause());
+                        promise.fail(commitResult.cause());
                     }
-                    future.complete(updateResult.result());
+                    promise.complete(updateResult.result());
                 });
             });
         });
-        return future;
+        return promise.future();
     }
 
-    private JsonObject getJDBCConfig() {
-        JsonObject dbConfig = config().getJsonObject("db", new JsonObject());
-
-        return new JsonObject()
-                .put("url", dbConfig.getString("url", "jdbc:postgresql://localhost:5432/ares"))
-                .put("user", dbConfig.getString("user", "postgres"))
-                .put("password", dbConfig.getString("password", "changeme"))
-                .put("driver_class", dbConfig.getString("driver_class", "org.postgresql.Driver"))
-                .put("schema", schema)
-                .put("max_pool_size", dbConfig.getInteger("max_pool_size", 30));
-    }
-
-    protected void getConnection(Handler<AsyncResult<Void>> hndlr) {
-        SQLClient sqlClient = JDBCClient.createShared(vertx, getJDBCConfig());
+    protected void getConnection(String dbName, Handler<AsyncResult<Void>> hndlr) {
+        sqlClient = JDBCClient.createNonShared(vertx, getJDBCConfig(dbName));
 
         sqlClient.getConnection(res -> {
             if (res.failed()) {
@@ -66,7 +55,6 @@ public abstract class AbstractDataVerticle extends AbstractVerticle {
             }
             conn = res.result();
             hndlr.handle(Future.succeededFuture());
-
         });
     }
 
@@ -75,43 +63,27 @@ public abstract class AbstractDataVerticle extends AbstractVerticle {
     }
 
     protected Future<JsonObject> sendMessage(final String topic, final JsonObject message) {
-        Future<JsonObject> future = Future.future();
+        Promise<JsonObject> promise = Promise.promise();
 
-        vertx.eventBus().<JsonObject>send(topic, message, reply -> {
+        vertx.eventBus().<JsonObject>request(topic, message, reply -> {
             if (reply.failed()) {
-                future.fail(reply.cause());
+                promise.fail(reply.cause());
             } else {
-                future.complete(reply.result().body());
+                promise.complete(reply.result().body());
             }
         });
 
-        return future;
+        return promise.future();
     }
 
-    protected Future<Void> liquibaseCycle(String name, DeploymentOptions options) {
-        Future<Void> future = Future.future();
-
-        vertx.deployVerticle(name, options, res -> {
-            if (res.failed()) {
-                future.fail(res.cause());
-            } else {
-                vertx.undeploy(res.result(), future);
-            }
-        });
-
-        return future;
-    }
-
-    protected JsonObject getDBConfig(String schema, String changeLogFile) {
+    private JsonObject getJDBCConfig(String dbName) {
         JsonObject dbConfig = config().getJsonObject("db", new JsonObject());
 
         return new JsonObject()
-                .put("url", dbConfig.getString("url", "jdbc:postgresql://localhost:5432/ares"))
+                .put("url", dbConfig.getString("url", "jdbc:postgresql://localhost:5432/"+ dbName))
                 .put("user", dbConfig.getString("user", "postgres"))
                 .put("password", dbConfig.getString("password", "changeme"))
                 .put("driver_class", dbConfig.getString("driver_class", "org.postgresql.Driver"))
-                .put("schema", schema)
-                .put("changeLogFile", changeLogFile)
-                .put("max_pool_size", dbConfig.getInteger("max_pool_size", 30));
+                .put("max_pool_size", dbConfig.getInteger("max_pool_size", 10));
     }
 }

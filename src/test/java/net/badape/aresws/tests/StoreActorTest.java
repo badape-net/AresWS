@@ -9,7 +9,7 @@ import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 import lombok.extern.slf4j.Slf4j;
 import net.badape.aresws.EventTopic;
-import net.badape.aresws.actors.HeroStoreActor;
+import net.badape.aresws.services.AresStore;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
@@ -22,7 +22,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Slf4j
 @DisplayName("👋 Testing the Hero Store Actor")
 @ExtendWith(VertxExtension.class)
-public class HeroStoreActorTest {
+public class StoreActorTest {
 
     @DisplayName("➡️ A nested test with customized lifecycle")
     @TestMethodOrder(OrderAnnotation.class)
@@ -40,7 +40,7 @@ public class HeroStoreActorTest {
             Checkpoint deploymentCheckpoint = testContext.checkpoint();
             Checkpoint newAccountCheckpoint = testContext.checkpoint(maxCount);
             Checkpoint buyHeroCheckpoint = testContext.checkpoint(maxCount);
-            vertx.deployVerticle(new HeroStoreActor(), testContext.succeeding(id -> {
+            vertx.deployVerticle(new AresStore(), testContext.succeeding(id -> {
                 deploymentCheckpoint.flag();
 
                 for (int i = 0; i < maxCount; i++) {

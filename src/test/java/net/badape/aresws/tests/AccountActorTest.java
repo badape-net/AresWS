@@ -9,7 +9,7 @@ import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 import lombok.extern.slf4j.Slf4j;
 import net.badape.aresws.EventTopic;
-import net.badape.aresws.actors.AccountActor;
+import net.badape.aresws.services.AresAccount;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
@@ -39,7 +39,7 @@ public class AccountActorTest {
             final int maxCount = 1000;
             Checkpoint deploymentCheckpoint = testContext.checkpoint();
             Checkpoint newAccountCheckpoint = testContext.checkpoint(maxCount);
-            vertx.deployVerticle(new AccountActor(), testContext.succeeding(id -> {
+            vertx.deployVerticle(new AresAccount(), testContext.succeeding(id -> {
                 deploymentCheckpoint.flag();
                 for (int i = 0; i < maxCount; i++) {
                     JsonObject message = new JsonObject().put("devId", i);
@@ -65,7 +65,7 @@ public class AccountActorTest {
             final int maxCount = 100;
             Checkpoint deploymentCheckpoint = testContext.checkpoint();
             Checkpoint newAccountCheckpoint = testContext.checkpoint(maxCount);
-            vertx.deployVerticle(new AccountActor(), testContext.succeeding(id -> {
+            vertx.deployVerticle(new AresAccount(), testContext.succeeding(id -> {
                 deploymentCheckpoint.flag();
                 for (int i = 0; i < maxCount; i++) {
                     JsonObject message = new JsonObject().put("devId", i);
@@ -90,7 +90,7 @@ public class AccountActorTest {
             final int maxCount = 100;
             Checkpoint deploymentCheckpoint = testContext.checkpoint();
             Checkpoint newAccountCheckpoint = testContext.checkpoint(maxCount);
-            vertx.deployVerticle(new AccountActor(), testContext.succeeding(id -> {
+            vertx.deployVerticle(new AresAccount(), testContext.succeeding(id -> {
                 deploymentCheckpoint.flag();
                 for (int i = 0; i < maxCount; i++) {
                     String deviceID = UUID.randomUUID().toString();

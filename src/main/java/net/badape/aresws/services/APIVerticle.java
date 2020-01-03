@@ -6,17 +6,19 @@ import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.json.JsonObject;
+import io.vertx.core.logging.Logger;
+import io.vertx.core.logging.LoggerFactory;
 import io.vertx.ext.web.Cookie;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.api.contract.RouterFactoryOptions;
 import io.vertx.ext.web.api.contract.openapi3.OpenAPI3RouterFactory;
 
-import lombok.extern.slf4j.Slf4j;
 import net.badape.aresws.EventTopic;
 
-@Slf4j
 public class APIVerticle extends AbstractVerticle {
+
+    private final Logger log = LoggerFactory.getLogger( APIVerticle.class );
 
     private HttpServer server;
     private EventBus eb;
@@ -35,6 +37,9 @@ public class APIVerticle extends AbstractVerticle {
             // Spec loaded with success
             OpenAPI3RouterFactory routerFactory = openAPI3RouterFactoryAsyncResult.result();
             // Add an handler with operationId
+
+            routerFactory.addHandlerByOperationId("refreshStore", this::refreshStore);
+            routerFactory.addFailureHandlerByOperationId("getTeam", this::failureHandler);
 
             routerFactory.addHandlerByOperationId("getTeam", this::getTeam);
             routerFactory.addFailureHandlerByOperationId("getTeam", this::failureHandler);
@@ -81,6 +86,17 @@ public class APIVerticle extends AbstractVerticle {
         return options;
     }
 
+    private void refreshStore(RoutingContext routingContext) {
+        JsonObject message = new JsonObject();
+        eb.<JsonObject>request(EventTopic.STORE_REFRESH, message, reply -> {
+            if (reply.succeeded()) {
+                routingContext.response().setStatusMessage("OK").end(reply.result().body().encode());
+            } else {
+                routingContext.fail(reply.cause());
+            }
+        });
+    }
+
     private void getTeam(RoutingContext routingContext) {
         log.info("getTeam");
 
@@ -88,14 +104,13 @@ public class APIVerticle extends AbstractVerticle {
         JsonObject message = new JsonObject()
                 .put("accountId", Long.parseLong(account));
 
-        eb.<JsonObject>send(EventTopic.GET_TEAM, message, reply -> {
+        eb.<JsonObject>request(EventTopic.GET_TEAM, message, reply -> {
             if (reply.succeeded()) {
                 routingContext.response().setStatusMessage("OK").end(reply.result().body().encode());
             } else {
                 routingContext.fail(reply.cause());
             }
         });
-
     }
 
     private void getAccountRoster(RoutingContext routingContext) {
@@ -104,7 +119,7 @@ public class APIVerticle extends AbstractVerticle {
         JsonObject message = new JsonObject()
                 .put("accountId", Long.parseLong(account));
 
-        eb.<JsonObject>send(EventTopic.GET_ROSTER, message, reply -> {
+        eb.<JsonObject>request(EventTopic.GET_ROSTER, message, reply -> {
             if (reply.succeeded()) {
                 routingContext.response().setStatusMessage("OK").end(reply.result().body().encode());
             } else {
@@ -120,7 +135,7 @@ public class APIVerticle extends AbstractVerticle {
                 .put("accountId", Long.parseLong(account))
                 .put("heroId", body.getLong("hero_id", -1L));
 
-        eb.<JsonObject>send(EventTopic.BUY_HERO, message, reply -> {
+        eb.<JsonObject>request(EventTopic.BUY_HERO, message, reply -> {
             if (reply.succeeded()) {
                 routingContext.response().setStatusMessage("OK").end(reply.result().body().encode());
             } else {
@@ -164,7 +179,6 @@ public class APIVerticle extends AbstractVerticle {
                 });
                 break;
             case "device":
-                log.info("device!");
                 message = new JsonObject()
                         .put("deviceId", routingContext.pathParam("account"));
 

@@ -102,22 +102,22 @@
         </createIndex>
 
         <sql>
-            ALTER TABLE store.hero ADD CONSTRAINT hero_credits_check CHECK (credits >= 0)
+            ALTER TABLE hero ADD CONSTRAINT hero_credits_check CHECK (credits >= 0)
         </sql>
         <sql>
-            ALTER TABLE store.account ADD CONSTRAINT hero_credits_check CHECK (balance >= 0)
+            ALTER TABLE account ADD CONSTRAINT hero_credits_check CHECK (balance >= 0)
         </sql>
         <sql>
-            ALTER TABLE store.hero ADD CONSTRAINT hero_health_check CHECK (health >= 0)
+            ALTER TABLE hero ADD CONSTRAINT hero_health_check CHECK (health >= 0)
         </sql>
         <sql>
-            ALTER TABLE store.hero ADD CONSTRAINT hero_mana_check CHECK (mana >= 0)
+            ALTER TABLE hero ADD CONSTRAINT hero_mana_check CHECK (mana >= 0)
         </sql>
         <sql>
-            ALTER TABLE store.hero ADD CONSTRAINT hero_stamina_check CHECK (stamina >= 0)
+            ALTER TABLE hero ADD CONSTRAINT hero_stamina_check CHECK (stamina >= 0)
         </sql>
         <sql>
-            ALTER TABLE store.hero ADD CONSTRAINT hero_spawn_cost_check CHECK (spawn_cost >= 0)
+            ALTER TABLE hero ADD CONSTRAINT hero_spawn_cost_check CHECK (spawn_cost >= 0)
         </sql>
 
     </changeSet>
@@ -125,23 +125,22 @@
     <changeSet id="2" author="badape">
         <createView catalogName="cat"
                     replaceIfExists="true"
-                    schemaName="store"
                     viewName="roster_view">
-            SELECT * FROM store.account
-            CROSS JOIN store.hero
-            FULL OUTER JOIN store.roster ON roster.hero_fk=hero.hero_pk AND roster.account_fk = account.account_pk
+            SELECT * FROM account
+            CROSS JOIN hero
+            FULL OUTER JOIN roster ON roster.hero_fk=hero.hero_pk AND roster.account_fk = account.account_pk
         </createView>
     </changeSet>
 
     <changeSet id="3" author="badape">
         <createProcedure>
-            CREATE OR REPLACE FUNCTION store.roster_view_insert_proc() RETURNS trigger AS
+            CREATE OR REPLACE FUNCTION roster_view_insert_proc() RETURNS trigger AS
             $$
             DECLARE account_id integer;
             BEGIN
 
-            UPDATE store.account SET balance = balance - (SELECT credits FROM store.hero WHERE hero_pk = NEW.hero_fk) WHERE account_pk = NEW.account_pk;
-            INSERT INTO store.roster(account_fk, hero_fk) VALUES (NEW.account_pk, NEW.hero_fk);
+            UPDATE account SET balance = balance - (SELECT credits FROM hero WHERE hero_pk = NEW.hero_fk) WHERE account_pk = NEW.account_pk;
+            INSERT INTO roster(account_fk, hero_fk) VALUES (NEW.account_pk, NEW.hero_fk);
 
             RETURN NEW;
             EXCEPTION WHEN unique_violation THEN
@@ -152,8 +151,8 @@
         </createProcedure>
         <sql>
             CREATE TRIGGER roster_insert_trg
-            INSTEAD OF INSERT ON store.roster_view FOR EACH ROW EXECUTE PROCEDURE
-            store.roster_view_insert_proc();
+            INSTEAD OF INSERT ON roster_view FOR EACH ROW EXECUTE PROCEDURE
+            roster_view_insert_proc();
         </sql>
     </changeSet>
 

@@ -1,23 +1,40 @@
 version: '3.5'
 
 services:
-  postgres:
-    container_name: postgres_container
-    image: postgres
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
-      PGDATA: /data/postgres
-    volumes:
-      - postgres:/data/postgres
-    ports:
-      - "5432:5432"
+  arestore-liquibase:
+    container_name: arestore-liquibase
+    build:
+      context: ./src/liquibase/store/
+      args:
+        - BAD_HOST=postgres
+        - BAD_DATABASE=aresstore
+        - BAD_USERNAME=${POSTGRES_USER:-postgres}
+        - BAD_PASSWORD=${POSTGRES_PASSWORD:-changeme}
+    command: liquibase update
+    image: arestore-liquibase:latest
     networks:
       - postgres
-    restart: unless-stopped
+    depends_on:
+      - postgres
+
+  aresaccount-liquibase:
+    container_name: aresaccount-liquibase
+    build:
+      context: ./src/liquibase/account/
+      args:
+        - BAD_HOST=postgres
+        - BAD_DATABASE=aresaccount
+        - BAD_USERNAME=${POSTGRES_USER:-postgres}
+        - BAD_PASSWORD=${POSTGRES_PASSWORD:-changeme}
+    command: liquibase update
+    image: aresaccount-liquibase:latest
+    networks:
+      - postgres
+    depends_on:
+      - postgres
 
   pgadmin:
-    container_name: pgadmin_container
+    container_name: pgadmin
     image: dpage/pgadmin4
     environment:
       PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-pgadmin4@pgadmin.org}
@@ -29,6 +46,28 @@ services:
     networks:
       - postgres
     restart: unless-stopped
+    depends_on:
+      - postgres
+
+  postgres:
+    container_name: postgres
+    image: postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+      PGDATA: /data/postgres
+    volumes:
+      - ./src/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"
+    networks:
+      - postgres
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5432"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
 
 networks:
   postgres:

@@ -88,6 +88,20 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+  /store/refresh:
+    post:
+      summary: Refresh store items
+      operationId: refreshStore
+      responses:
+        201:
+          description: Null response
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
 components:
   schemas:
 
