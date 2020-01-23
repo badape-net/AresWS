@@ -144,14 +144,14 @@ public class AresStore extends AbstractDataVerticle {
 
         WebClient client = WebClient.create(vertx);
 
-        String space =config().getString("CONTENTFUL_SPACE_ID");
+        String space = config().getString("CONTENTFUL_SPACE_ID");
         String token = config().getString("CONTENTFUL_ACCESS_TOKEN");
 
         HttpRequest<Buffer> request = client.get(443, "cdn.contentful.com", "/spaces/" + space + "/entries")
                 .ssl(true);
         request.addQueryParam("content_type", "hero");
         request.putHeader("Authorization", "Bearer " + token);
-        request.send(result ->{
+        request.send(result -> {
             if (result.succeeded()) {
                 final List<Future> lFutures = new ArrayList<>();
                 conn.setAutoCommit(false, rTx -> {

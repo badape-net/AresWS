@@ -1,0 +1,40 @@
+version: '3.5'
+
+services:
+  arestore-liquibase:
+    container_name: arestore-liquibase
+    build:
+      context: ./src/liquibase/store/
+      args:
+        - BAD_HOST=postgres
+        - BAD_DATABASE=aresstore
+        - BAD_USERNAME=${POSTGRES_USER:-postgres}
+        - BAD_PASSWORD=${POSTGRES_PASSWORD:-changeme}
+    command: liquibase update
+    image: arestore-liquibase:latest
+    networks:
+      - postgres
+
+  aresaccount-liquibase:
+    container_name: aresaccount-liquibase
+    build:
+      context: ./src/liquibase/account/
+      args:
+        - BAD_HOST=postgres
+        - BAD_DATABASE=aresaccount
+        - BAD_USERNAME=${POSTGRES_USER:-postgres}
+        - BAD_PASSWORD=${POSTGRES_PASSWORD:-changeme}
+    command: liquibase update
+    image: aresaccount-liquibase:latest
+    networks:
+      - postgres
+    depends_on:
+      - arestore-liquibase
+
+networks:
+  postgres:
+    driver: bridge
+
+volumes:
+  postgres:
+  pgadmin:

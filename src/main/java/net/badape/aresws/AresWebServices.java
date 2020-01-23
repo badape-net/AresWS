@@ -10,6 +10,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import net.badape.aresws.services.AresAccount;
+import net.badape.aresws.services.AresContent;
 import net.badape.aresws.services.AresStore;
 import net.badape.aresws.services.APIVerticle;
 
@@ -35,6 +36,7 @@ public class AresWebServices extends AbstractVerticle {
             final List<Future> sFutures = ImmutableList.of(
                     deployHelper(AresStore.class.getName(), envConfig.result(), 1),
                     deployHelper(AresAccount.class.getName(), envConfig.result(), 1),
+                    deployHelper(AresContent.class.getName(), envConfig.result(), 1),
                     deployHelper(APIVerticle.class.getName())
             );
 

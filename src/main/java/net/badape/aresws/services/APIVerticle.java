@@ -50,6 +50,8 @@ public class APIVerticle extends AbstractVerticle {
             routerFactory.addHandlerByOperationId("buyAccountRoster", this::buyAccountRoster);
             routerFactory.addFailureHandlerByOperationId("buyAccountRoster", this::failureHandler);
 
+            routerFactory.addHandlerByOperationId("getGameNews", this::getGameNews);
+
             // Add a security handler
             routerFactory.addSecurityHandler("platform_key", this::securityHandler);
 
@@ -136,6 +138,20 @@ public class APIVerticle extends AbstractVerticle {
                 .put("heroId", body.getLong("hero_id", -1L));
 
         eb.<JsonObject>request(EventTopic.BUY_HERO, message, reply -> {
+            if (reply.succeeded()) {
+                routingContext.response().setStatusMessage("OK").end(reply.result().body().encode());
+            } else {
+                routingContext.fail(reply.cause());
+            }
+        });
+    }
+
+    private void getGameNews(RoutingContext routingContext) {
+
+        log.error("GetGameNews!");
+        JsonObject message = new JsonObject();
+
+        eb.<JsonObject>request(EventTopic.GET_GAME_NEWS, message, reply -> {
             if (reply.succeeded()) {
                 routingContext.response().setStatusMessage("OK").end(reply.result().body().encode());
             } else {
