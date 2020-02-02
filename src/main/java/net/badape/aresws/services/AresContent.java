@@ -1,25 +1,19 @@
 package net.badape.aresws.services;
 
-import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.eventbus.Message;
-import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import io.vertx.core.logging.Logger;
-import io.vertx.core.logging.LoggerFactory;
 import io.vertx.ext.web.client.HttpRequest;
 import io.vertx.ext.web.client.WebClient;
+import lombok.extern.slf4j.Slf4j;
 import net.badape.aresws.EventTopic;
 import net.badape.aresws.db.AbstractDataVerticle;
 
-import java.util.ArrayList;
-import java.util.List;
-
+@Slf4j
 public class AresContent extends AbstractDataVerticle {
 
-    private final Logger log = LoggerFactory.getLogger( AresContent.class );
     private EventBus eb;
     private WebClient webClient;
     private String space;

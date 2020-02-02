@@ -5,14 +5,13 @@ import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.eventbus.Message;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import io.vertx.core.logging.Logger;
-import io.vertx.core.logging.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import net.badape.aresws.EventTopic;
 import net.badape.aresws.db.AbstractDataVerticle;
 
+@Slf4j
 public class AresAccount extends AbstractDataVerticle {
 
-    private final Logger log = LoggerFactory.getLogger( AresAccount.class );
     private EventBus eb;
 
     @Override

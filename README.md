@@ -10,9 +10,7 @@ Provides a Game Management Service currently integrates with steam web api
 
 ## Usage Notes
 
-quick notes on how to handle submodules
 
-`
-.\gradlew.bat common:test
-`
+
+
 

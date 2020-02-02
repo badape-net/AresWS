@@ -102,9 +102,33 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
 
+  /content/news:
+    get:
+      summary: Get Game News
+      operationId: getGameNews
+      responses:
+        200:
+          description: Expected response to a valid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/News"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
 components:
   schemas:
-
+    News:
+      type: object
+      properties:
+        title:
+          type: string
+        body:
+          type: string
     Hero:
       type: object
       properties:

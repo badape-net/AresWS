@@ -1,9 +1,13 @@
 {
   "db": {
-    "url": "jdbc:postgresql://postgres:5432/ares",
+    "url": "jdbc:postgresql://postgres:5432/",
     "user": "postgres",
     "password": "changeme",
     "driver_class": "org.postgresql.Driver",
     "max_pool_size": 30
+  },
+  "contentful" : {
+    "token": "",
+    "space": ""
   }
 }

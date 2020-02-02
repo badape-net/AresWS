@@ -7,26 +7,28 @@ import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.eventbus.Message;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import io.vertx.core.logging.Logger;
-import io.vertx.core.logging.LoggerFactory;
 import io.vertx.ext.sql.UpdateResult;
 import io.vertx.ext.web.client.HttpRequest;
 import io.vertx.ext.web.client.WebClient;
+import lombok.extern.slf4j.Slf4j;
 import net.badape.aresws.EventTopic;
 import net.badape.aresws.db.AbstractDataVerticle;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@Slf4j
 public class AresStore extends AbstractDataVerticle {
 
-    private final Logger log = LoggerFactory.getLogger( AresStore.class );
     private EventBus eb;
+    private String space;
+    private String token;
 
     @Override
     public void start(Future<Void> startFuture) {
         getConnection("aresstore", result -> {
             if (result.succeeded()) {
+                setContentConfig();
                 eb = vertx.eventBus();
                 eb.<JsonObject>consumer(EventTopic.NEW_ACCOUNT, this::newAccount);
                 eb.<JsonObject>consumer(EventTopic.BUY_HERO, this::buyHero);
@@ -38,6 +40,14 @@ public class AresStore extends AbstractDataVerticle {
                 startFuture.fail(result.cause());
             }
         });
+    }
+
+    private void setContentConfig() {
+        JsonObject contentConfig = config().getJsonObject("contentful", new JsonObject());
+        space = contentConfig.getString("space", config().getString("CONTENTFUL_SPACE_ID"));
+        token = contentConfig.getString("token",config().getString("CONTENTFUL_ACCESS_TOKEN"));
+
+        log.info("contentful token: "+ token + "space: "+ space);
     }
 
     private static final String SELECT_TEAM =
@@ -144,8 +154,7 @@ public class AresStore extends AbstractDataVerticle {
 
         WebClient client = WebClient.create(vertx);
 
-        String space = config().getString("CONTENTFUL_SPACE_ID");
-        String token = config().getString("CONTENTFUL_ACCESS_TOKEN");
+
 
         HttpRequest<Buffer> request = client.get(443, "cdn.contentful.com", "/spaces/" + space + "/entries")
                 .ssl(true);

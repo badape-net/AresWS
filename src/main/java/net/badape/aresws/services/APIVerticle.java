@@ -6,19 +6,17 @@ import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.json.JsonObject;
-import io.vertx.core.logging.Logger;
-import io.vertx.core.logging.LoggerFactory;
 import io.vertx.ext.web.Cookie;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.api.contract.RouterFactoryOptions;
 import io.vertx.ext.web.api.contract.openapi3.OpenAPI3RouterFactory;
 
+import lombok.extern.slf4j.Slf4j;
 import net.badape.aresws.EventTopic;
 
+@Slf4j
 public class APIVerticle extends AbstractVerticle {
-
-    private final Logger log = LoggerFactory.getLogger( APIVerticle.class );
 
     private HttpServer server;
     private EventBus eb;

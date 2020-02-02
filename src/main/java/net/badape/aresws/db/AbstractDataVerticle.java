@@ -3,16 +3,14 @@ package net.badape.aresws.db;
 import io.vertx.core.*;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import io.vertx.core.logging.Logger;
-import io.vertx.core.logging.LoggerFactory;
 import io.vertx.ext.jdbc.JDBCClient;
 import io.vertx.ext.sql.SQLClient;
 import io.vertx.ext.sql.SQLConnection;
 import io.vertx.ext.sql.UpdateResult;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public abstract class AbstractDataVerticle extends AbstractVerticle {
-
-    private final Logger log = LoggerFactory.getLogger( AbstractDataVerticle.class );
 
     protected SQLClient sqlClient;
     protected SQLConnection conn;
@@ -79,11 +77,13 @@ public abstract class AbstractDataVerticle extends AbstractVerticle {
     private JsonObject getJDBCConfig(String dbName) {
         JsonObject dbConfig = config().getJsonObject("db", new JsonObject());
 
-        return new JsonObject()
-                .put("url", dbConfig.getString("url", "jdbc:postgresql://localhost:5432/"+ dbName))
+        JsonObject jdbcConfig = new JsonObject()
+                .put("url", dbConfig.getString("url", "jdbc:postgresql://localhost:5432/")+ dbName)
                 .put("user", dbConfig.getString("user", "postgres"))
                 .put("password", dbConfig.getString("password", "changeme"))
                 .put("driver_class", dbConfig.getString("driver_class", "org.postgresql.Driver"))
                 .put("max_pool_size", dbConfig.getInteger("max_pool_size", 10));
+
+        return  jdbcConfig;
     }
 }

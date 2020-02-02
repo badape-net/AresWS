@@ -7,18 +7,16 @@ import io.vertx.config.ConfigStoreOptions;
 import io.vertx.core.*;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import io.vertx.core.logging.Logger;
-import io.vertx.core.logging.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
+import net.badape.aresws.services.APIVerticle;
 import net.badape.aresws.services.AresAccount;
 import net.badape.aresws.services.AresContent;
 import net.badape.aresws.services.AresStore;
-import net.badape.aresws.services.APIVerticle;
 
 import java.util.List;
 
+@Slf4j
 public class AresWebServices extends AbstractVerticle {
-
-    private final Logger log = LoggerFactory.getLogger( AresWebServices.class );
 
     public static void main(String[] args) {
         Launcher.main(new String[]{"run", AresWebServices.class.getName(), "-ha"});

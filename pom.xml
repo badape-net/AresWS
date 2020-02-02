@@ -6,7 +6,7 @@
     <description>Player Services</description>
     <groupId>net.badape</groupId>
     <artifactId>aresws</artifactId>
-    <version>1.2.0</version>
+    <version>1.2.11</version>
     <packaging>jar</packaging>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -76,6 +76,21 @@
             <version>42.2.9</version>
         </dependency>
 
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>1.18.10</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- https://mvnrepository.com/artifact/org.slf4j/slf4j-simple -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-simple</artifactId>
+            <version>1.7.30</version>
+        </dependency>
+
+
 
         <!-- Test dependencies -->
         <dependency>
@@ -107,12 +122,6 @@
             <artifactId>junit-jupiter-engine</artifactId>
             <version>${junit-jupiter.version}</version>
             <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>io.vertx</groupId>
-            <artifactId>vertx-web-client</artifactId>
-            <version>${vertx.version}</version>
-            <scope>compile</scope>
         </dependency>
     </dependencies>
 
@@ -231,7 +240,7 @@
             <plugin>
                 <groupId>io.fabric8</groupId>
                 <artifactId>docker-maven-plugin</artifactId>
-                <version>0.30.0</version>
+                <version>0.33.0</version>
                 <configuration>
 
                     <images>
