@@ -24,7 +24,7 @@
                 <constraints primaryKey="true" nullable="false"/>
             </column>
             <column name="account_fk" type="bigint">
-                <constraints nullable="false" />
+                <constraints nullable="false"/>
             </column>
             <column name="dev_created" defaultValueComputed="now()" type="TIMESTAMP">
                 <constraints nullable="false"/>
@@ -37,7 +37,7 @@
                                  referencedTableName="account"
                                  referencedColumnNames="account_pk"
                                  onDelete="NO ACTION"
-                                 onUpdate="NO ACTION" />
+                                 onUpdate="NO ACTION"/>
 
     </changeSet>
 
@@ -82,7 +82,7 @@
                 <constraints primaryKey="true" nullable="false"/>
             </column>
             <column name="account_fk" type="bigint">
-                <constraints nullable="false" />
+                <constraints nullable="false"/>
             </column>
             <column name="device_created" defaultValueComputed="now()" type="TIMESTAMP">
                 <constraints nullable="false"/>
@@ -103,7 +103,7 @@
 
             INSERT INTO account DEFAULT VALUES RETURNING account_pk INTO account_id;
             INSERT INTO device_account(device_account_pk, account_fk)
-                VALUES (NEW.device_account_pk, account_id);
+            VALUES (NEW.device_account_pk, account_id);
 
             NEW.account_fk = account_id;
 
@@ -118,6 +118,53 @@
             CREATE TRIGGER device_account_view_insert_trg
             INSTEAD OF INSERT ON device_account_view FOR EACH ROW EXECUTE PROCEDURE
             device_account_view_insert_proc();
+        </sql>
+
+    </changeSet>
+
+    <changeSet id="5" author="badape">
+
+        <createTable tableName="eos_account">
+            <column name="eos_account_pk" type="varchar(255)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="account_fk" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="eos_created" defaultValueComputed="now()" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createView catalogName="cat"
+                    replaceIfExists="true"
+                    viewName="eos_account_view">
+            SELECT * FROM eos_account FULL OUTER JOIN account ON account_pk = eos_account.account_fk
+        </createView>
+
+        <createProcedure>
+            CREATE OR REPLACE FUNCTION eos_account_view_insert_proc() RETURNS trigger AS
+            $$
+            DECLARE account_id integer;
+            BEGIN
+
+            INSERT INTO account DEFAULT VALUES RETURNING account_pk INTO account_id;
+            INSERT INTO eos_account(eos_account_pk, account_fk)
+            VALUES (NEW.eos_account_pk, account_id);
+
+            NEW.account_fk = account_id;
+
+            RETURN NEW;
+            EXCEPTION WHEN unique_violation THEN
+            RAISE EXCEPTION 'Duplicate account or eos_account id';
+            END;
+            $$
+            LANGUAGE 'plpgsql';
+        </createProcedure>
+        <sql>
+            CREATE TRIGGER eos_account_view_insert_trg
+            INSTEAD OF INSERT ON eos_account_view FOR EACH ROW EXECUTE PROCEDURE
+            eos_account_view_insert_proc();
         </sql>
 
     </changeSet>

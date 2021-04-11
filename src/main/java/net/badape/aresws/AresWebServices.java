@@ -1,6 +1,5 @@
 package net.badape.aresws;
 
-import com.google.common.collect.ImmutableList;
 import io.vertx.config.ConfigRetriever;
 import io.vertx.config.ConfigRetrieverOptions;
 import io.vertx.config.ConfigStoreOptions;
@@ -8,10 +7,7 @@ import io.vertx.core.*;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import lombok.extern.slf4j.Slf4j;
-import net.badape.aresws.services.APIVerticle;
-import net.badape.aresws.services.AresAccount;
-import net.badape.aresws.services.AresContent;
-import net.badape.aresws.services.AresStore;
+import net.badape.aresws.services.*;
 
 import java.util.List;
 
@@ -22,7 +18,6 @@ public class AresWebServices extends AbstractVerticle {
         Launcher.main(new String[]{"run", AresWebServices.class.getName(), "-ha"});
     }
 
-    @Override
     public void start(Promise<Void> promise) {
         ConfigRetriever retriever = ConfigRetriever.create(vertx, new ConfigRetrieverOptions()
                 .addStore(new ConfigStoreOptions().setType("env")
@@ -31,16 +26,19 @@ public class AresWebServices extends AbstractVerticle {
                                 .add("CONTENTFUL_ACCESS_TOKEN")))));
 
         retriever.getConfig(envConfig -> {
-            final List<Future> sFutures = ImmutableList.of(
+
+            final List<Future> sFutures = List.of(
+//                    deployHelper(HeroContentRefresh.class.getName(), envConfig.result(), 1),
+                    deployHelper(AresAnalyticsReciever.class.getName(), envConfig.result(), 1),
+                    deployHelper(AresConfig.class.getName(), envConfig.result(), 1),
                     deployHelper(AresStore.class.getName(), envConfig.result(), 1),
                     deployHelper(AresAccount.class.getName(), envConfig.result(), 1),
-                    deployHelper(AresContent.class.getName(), envConfig.result(), 1),
-                    deployHelper(APIVerticle.class.getName())
+                    deployHelper(APIVerticle.class.getName(), envConfig.result(), 1)
             );
 
-            CompositeFuture.join(sFutures).setHandler(result -> {
+            CompositeFuture.all(sFutures).onComplete(result -> {
                 if (result.succeeded()) {
-                    log.info("Ares Web Services running");
+                    log.debug("Ares Web Services running");
                     promise.complete();
                 } else {
                     log.error(result.cause().getMessage());
@@ -64,5 +62,6 @@ public class AresWebServices extends AbstractVerticle {
         vertx.deployVerticle(name, options, promise);
         return promise.future();
     }
+
 
 }

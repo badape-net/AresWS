@@ -1,6 +1,20 @@
 version: '3.5'
 
 services:
+  aresconfig-liquibase:
+    container_name: aresconfig-liquibase
+    build:
+      context: ./src/liquibase/config/
+      args:
+        - BAD_HOST=postgres
+        - BAD_DATABASE=aresconfig
+        - BAD_USERNAME=${POSTGRES_USER:-postgres}
+        - BAD_PASSWORD=${POSTGRES_PASSWORD:-changeme}
+    command: liquibase update
+    image: aresconfig-liquibase:latest
+    networks:
+      - postgres
+
   arestore-liquibase:
     container_name: arestore-liquibase
     build:

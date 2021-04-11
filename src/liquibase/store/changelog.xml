@@ -15,28 +15,10 @@
             <column name="hero_pk" type="bigint" autoIncrement="true">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
-            <column name="game_idx" type="bigint">
-                <constraints unique="true" nullable="false"/>
-            </column>
             <column name="title" type="varchar(50)">
                 <constraints nullable="false"/>
             </column>
             <column name="credits" type="bigint">
-                <constraints nullable="false"/>
-            </column>
-            <column name="description" type="longtext">
-                <constraints nullable="false"/>
-            </column>
-            <column name="health" type="bigint">
-                <constraints nullable="false"/>
-            </column>
-            <column name="mana" type="bigint">
-                <constraints nullable="false"/>
-            </column>
-            <column name="stamina" type="bigint">
-                <constraints nullable="false"/>
-            </column>
-            <column name="spawn_cost" type="bigint">
                 <constraints nullable="false"/>
             </column>
         </createTable>
@@ -46,7 +28,7 @@
                 <constraints primaryKey="true" nullable="false"/>
             </column>
             <column name="balance" type="bigint">
-                <constraints nullable="false" />
+                <constraints nullable="false"/>
             </column>
         </createTable>
 
@@ -56,9 +38,6 @@
             </column>
             <column name="hero_fk" type="bigint">
                 <constraints primaryKey="true" nullable="false"/>
-            </column>
-            <column name="level" type="bigint" defaultValueNumeric="1">
-                <constraints nullable="false"/>
             </column>
             <column name="experience" type="bigint" defaultValue="0">
                 <constraints nullable="false"/>
@@ -87,6 +66,16 @@
                 referencedColumnNames="hero_pk"
                 onDelete="NO ACTION" onUpdate="NO ACTION"/>
 
+        <addUniqueConstraint
+                catalogName="cat"
+                columnNames="title"
+                constraintName="unique_title"
+                deferrable="true"
+                disabled="false"
+                initiallyDeferred="true"
+                schemaName="public"
+                tableName="hero"/>
+
 
         <createIndex catalogName="catalog" indexName="idx_hero_pk" tableName="hero" unique="true">
             <column name="hero_pk"/>
@@ -106,18 +95,6 @@
         </sql>
         <sql>
             ALTER TABLE account ADD CONSTRAINT hero_credits_check CHECK (balance >= 0)
-        </sql>
-        <sql>
-            ALTER TABLE hero ADD CONSTRAINT hero_health_check CHECK (health >= 0)
-        </sql>
-        <sql>
-            ALTER TABLE hero ADD CONSTRAINT hero_mana_check CHECK (mana >= 0)
-        </sql>
-        <sql>
-            ALTER TABLE hero ADD CONSTRAINT hero_stamina_check CHECK (stamina >= 0)
-        </sql>
-        <sql>
-            ALTER TABLE hero ADD CONSTRAINT hero_spawn_cost_check CHECK (spawn_cost >= 0)
         </sql>
 
     </changeSet>
@@ -139,7 +116,9 @@
             DECLARE account_id integer;
             BEGIN
 
-            UPDATE account SET balance = balance - (SELECT credits FROM hero WHERE hero_pk = NEW.hero_fk) WHERE account_pk = NEW.account_pk;
+            SELECT hero_pk FROM public.hero WHERE title = NEW.title into NEW.hero_fk;
+            UPDATE account SET balance = balance - (SELECT credits FROM hero WHERE hero_pk = NEW.hero_fk) WHERE
+            account_pk = NEW.account_pk;
             INSERT INTO roster(account_fk, hero_fk) VALUES (NEW.account_pk, NEW.hero_fk);
 
             RETURN NEW;

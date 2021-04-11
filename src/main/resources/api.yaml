@@ -1,125 +1,120 @@
 openapi: 3.0.0
 info:
-  version: 1.0.0
+  version: '1.0'
   title: Ares Web Services
   license:
-    name: MIT
+    name: BadApe
+    url: 'https://www.badape.net/licence'
+  contact:
+    url: 'https://www.badape.net'
+    email: francis@badape.net
+    name: Francis West
+  termsOfService: 'https://www.badape.net/terms'
+  description: Ares Web services API v1
 servers:
-  - url: http://api.badape.online/v1
-
+  - url: 'http://api.badape.online/v1'
 paths:
-  /store/{account}/team:
+  /config/characters:
     get:
-      summary: Get Player Roster
-      operationId: getTeam
-      security:
-        - platform_key: []
-      parameters:
-        - in: path
-          name: account
-          required: true
-          description: The player id of the player to retrieve
-          schema:
-            type: string
+      summary: Get Character Config
+      operationId: getCharacterConfig
       responses:
-        200:
+        '200':
           description: Expected response to a valid request
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Roster"
+                $ref: '#/components/schemas/CharacterConfig'
         default:
           description: unexpected error
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-
-  /store/{account}/roster:
-    get:
-      summary: Get Player Roster
-      operationId: getAccountRoster
-      security:
-        - platform_key: []
-      parameters:
-        - in: path
-          name: account
-          required: true
-          description: The player id of the player to retrieve
-          schema:
-            type: string
-
-      responses:
-        200:
-          description: Expected response to a valid request
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Roster"
-        default:
-          description: unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-    post:
-      summary: Buy hero
-      operationId: buyAccountRoster
-      security:
-        - platform_key: []
-      parameters:
-        - in: path
-          name: account
-          required: true
-          description: The player id of the player to retrieve
-          schema:
-            type: string
-
+                $ref: '#/components/schemas/Error'
+      description: get player's team
       tags:
-        - Item
-      requestBody:
-        $ref: "#/components/schemas/Hero"
+        - ares
+  '/store/{account}':
+    get:
+      summary: Get Player Roster
+      operationId: get-roster
+      parameters:
+        - in: path
+          name: account
+          required: true
+          description: The player id of the player to retrieve
+          schema:
+            type: string
       responses:
-        201:
-          description: Null response
+        '200':
+          description: Expected response to a valid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Roster'
         default:
           description: unexpected error
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-  /store/refresh:
+                $ref: '#/components/schemas/Error'
+      description: get player's team
+      tags:
+        - ares
+    parameters: []
     post:
-      summary: Refresh store items
-      operationId: refreshStore
+      summary: ''
+      operationId: post-roster
+      parameters:
+        - in: path
+          name: account
+          required: true
+          description: The player id of the player to retrieve
+          schema:
+            type: string
       responses:
-        201:
-          description: Null response
-        default:
-          description: unexpected error
+        '200':
+          description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-
+                $ref: '#/components/schemas/Roster'
+      description: Buy Hero Character
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Hero'
   /content/news:
     get:
       summary: Get Game News
       operationId: getGameNews
       responses:
-        200:
+        '200':
           description: Expected response to a valid request
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/News"
+                $ref: '#/components/schemas/News'
         default:
           description: unexpected error
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-
+                $ref: '#/components/schemas/Error'
+      description: Get the Game News
+  /health:
+    get:
+      summary: Your GET endpoint
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Health'
+      operationId: get-health
+      description: Get the service health
 components:
   schemas:
     News:
@@ -131,23 +126,86 @@ components:
           type: string
     Hero:
       type: object
+      x-examples: {}
       properties:
-        game_id:
-          type: integer
-          format: int64
-        roster:
-          type: boolean
-    Heroes:
+        '':
+          type: string
+    Character:
       type: object
+      x-examples: {}
       properties:
-        heroes:
-          type: array
-          items:
-            $ref: "#/components/schemas/Hero"
+        Name:
+          type: string
+          description: local mapping id
+          maxLength: 50
+        HeroClass:
+          type: string
+          maxLength: 50
+        Faction:
+          type: string
+          maxLength: 50
+        Credits:
+          type: integer
+          minimum: 0
+        MaxHealth:
+          type: integer
+          minimum: 0
+        HealthRegenRate:
+          type: number
+          minimum: 0
+        MaxMana:
+          type: number
+          minimum: 0
+        ManaRegenRate:
+          type: number
+          minimum: 0
+        MaxStamina:
+          type: number
+          minimum: 0
+        StaminaRegenRate:
+          type: number
+          minimum: 0
+        MoveSpeed:
+          type: number
+          minimum: 0
+        Armor:
+          type: number
+          minimum: 0
+      required:
+        - Name
+        - HeroClass
+        - Faction
+        - Credits
+        - MaxHealth
+        - HealthRegenRate
+        - MaxMana
+        - ManaRegenRate
+        - MaxStamina
+        - StaminaRegenRate
+        - MoveSpeed
+        - Armor
     Roster:
       type: array
       items:
-        $ref: "#/components/schemas/Hero"
+        $ref: '#/components/schemas/Hero'
+    CharacterConfig:
+      type: array
+      items:
+        $ref: '#/components/schemas/Character'
+      x-examples:
+        example-1:
+          - Name: string
+            HeroClass: string
+            Faction: string
+            Credits: 0
+            MaxHealth: 0
+            HealthRegenRate: 0
+            MaxMana: 0
+            ManaRegenRate: 0
+            MaxStamina: 0
+            StaminaRegenRate: 0
+            MoveSpeed: 0
+            Armor: 0
     Error:
       type: object
       required:
@@ -159,11 +217,12 @@ components:
           format: int32
         message:
           type: string
-
-  securitySchemes:
-    platform_key:
-      type: apiKey
-      name: X-PLATFORM-KEY
-      in: header
-
-
+    Health:
+      title: Health
+      type: object
+      properties:
+        id:
+          type: string
+          readOnly: true
+      required:
+        - id

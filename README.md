@@ -14,6 +14,7 @@ to bring up development environment
 
 ```
 docker-compose up
+docker-compose -f docker-compose-liquibase.yml build
 docker-compose -f docker-compose-liquibase.yml up
 docker-compose -f docker-compose-liquibase.yml stop
 curl http://localhost:8765/store/refresh

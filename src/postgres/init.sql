@@ -1,2 +1,3 @@
 CREATE DATABASE aresstore;
 CREATE DATABASE aresaccount;
+CREATE DATABASE aresconfig;

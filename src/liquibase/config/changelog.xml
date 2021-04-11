@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd
+        http://www.liquibase.org/xml/ns/dbchangelog-ext
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd">
+
+    <changeSet id="1" author="badape">
+        <createTable tableName="characters">
+            <column name="Name" type="varchar(50)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="HeroClass" type="varchar(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="Faction" type="varchar(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="Credits" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="MaxHealth" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="HealthRegenRate" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="MaxMana" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="ManaRegenRate" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="MaxStamina" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="StaminaRegenRate" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="MoveSpeed" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="Armor" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addDefaultValue catalogName="cat" columnDataType="bigint" columnName="Credits"
+                         defaultValueNumeric="0" schemaName="public" tableName="characters"/>
+
+        <addDefaultValue catalogName="cat" columnDataType="bigint" columnName="MaxHealth"
+                         defaultValueNumeric="0" schemaName="public" tableName="characters"/>
+
+        <addDefaultValue catalogName="cat" columnDataType="bigint" columnName="HealthRegenRate"
+                         defaultValueNumeric="0" schemaName="public" tableName="characters"/>
+
+        <addDefaultValue catalogName="cat" columnDataType="bigint" columnName="MaxMana"
+                         defaultValueNumeric="0" schemaName="public" tableName="characters"/>
+
+        <addDefaultValue catalogName="cat" columnDataType="bigint" columnName="ManaRegenRate"
+                         defaultValueNumeric="0" schemaName="public" tableName="characters"/>
+
+        <addDefaultValue catalogName="cat" columnDataType="bigint" columnName="MaxStamina"
+                         defaultValueNumeric="0" schemaName="public" tableName="characters"/>
+
+        <addDefaultValue catalogName="cat" columnDataType="bigint" columnName="StaminaRegenRate"
+                         defaultValueNumeric="0" schemaName="public" tableName="characters"/>
+
+        <addDefaultValue catalogName="cat" columnDataType="bigint" columnName="MoveSpeed"
+                         defaultValueNumeric="0" schemaName="public" tableName="characters"/>
+
+        <addDefaultValue catalogName="cat" columnDataType="bigint" columnName="Armor"
+                         defaultValueNumeric="0" schemaName="public" tableName="characters"/>
+
+        <createTable tableName="factions">
+            <column name="Name" type="varchar(50)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="2" author="badape">
+        <createView catalogName="cat"
+                    replaceIfExists="true"
+                    viewName="character_config_view">
+            SELECT "Name", "HeroClass", "Faction", "Credits", "MaxHealth", "HealthRegenRate", "MaxMana", "ManaRegenRate",
+            "MaxStamina", "StaminaRegenRate", "MoveSpeed", "Armor",
+            (SELECT MAX("MaxHealth") FROM characters) as "MaxHealthTop",
+            (SELECT MAX("HealthRegenRate") FROM characters) as "HealthRegenRateTop",
+            (SELECT MAX("MaxMana") FROM characters) as "MaxManaTop",
+            (SELECT MAX("ManaRegenRate") FROM characters) as "ManaRegenRateTop",
+            (SELECT MAX("MaxStamina") FROM characters) as "MaxStaminaTop",
+            (SELECT MAX("StaminaRegenRate") FROM characters) as "StaminaRegenRateTop",
+            (SELECT MAX("MoveSpeed") FROM characters) as "MoveSpeedTop",
+            (SELECT MAX("Armor") FROM characters) as "ArmorTop"
+            FROM public."characters"
+        </createView>
+    </changeSet>
+</databaseChangeLog>

@@ -1,6 +1,6 @@
 package net.badape.aresws.services;
 
-import io.vertx.core.Future;
+import io.vertx.core.AbstractVerticle;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.eventbus.Message;
@@ -9,28 +9,27 @@ import io.vertx.ext.web.client.HttpRequest;
 import io.vertx.ext.web.client.WebClient;
 import lombok.extern.slf4j.Slf4j;
 import net.badape.aresws.EventTopic;
-import net.badape.aresws.db.AbstractDataVerticle;
 
 @Slf4j
-public class AresContent extends AbstractDataVerticle {
+public class AresContent extends AbstractVerticle {
 
     private EventBus eb;
     private WebClient webClient;
-    private String space;
-    private String token;
+    private final String space;
+    private final String token;
 
-    @Override
-    public void start(Future<Void> startFuture) {
+    public AresContent(String space, String token) {
+        this.space = space;
+        this.token = token;
+    }
+
+    public void start() {
 
         webClient = WebClient.create(vertx);
-        space = config().getString("CONTENTFUL_SPACE_ID");
-        token = config().getString("CONTENTFUL_ACCESS_TOKEN");
 
-        getConnection("aresaccount", result ->{
-            eb = vertx.eventBus();
-            eb.<JsonObject>consumer(EventTopic.GET_GAME_NEWS, this::getGameNews);
-        });
 
+        eb = vertx.eventBus();
+        eb.<JsonObject>consumer(EventTopic.GET_GAME_NEWS, this::getGameNews);
     }
 
     private void getGameNews(Message<JsonObject> message) {

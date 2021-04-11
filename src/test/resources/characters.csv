@@ -1,0 +1,10 @@
+Name,HeroClass,Faction,Credits,MaxHealth,HealthRegenRate,MaxMana,ManaRegenRate,MaxStamina,StaminaRegenRate,MoveSpeed,Armor
+Boris,Boris,Evolved,5000,500,30,70,25,400,70,50,700
+Fey,Fey,Evolved,6000,300,70,800,60,100,5,100,40
+Muriel,Muriel,Enhanced,6000,350,90,500,30,200,50,90,70
+Crunch,Crunch,Enhanced,7000,800,30,90,10,600,20,45,900
+Serath,Serath,Arcane,5500,450,90,600,80,450,60,110,300
+Greystone,Greystone,Arcane,7500,500,110,300,60,650,40,90,350
+Howitzer,Howitzer,Evolved,6600,350,90,200,90,750,110,90,700
+Sparrow,Sparrow,Arcane,6000,200,150,800,100,500,80,120,100
+Dekker,Dekker,Enhanced,5500,240,120,700,110,600,90,115,600

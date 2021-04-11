@@ -1,96 +1,91 @@
 package net.badape.aresws.services;
 
-import io.vertx.core.Future;
+import io.vertx.core.AbstractVerticle;
+import io.vertx.core.Promise;
 import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.eventbus.Message;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import io.vertx.pgclient.PgConnectOptions;
+import io.vertx.sqlclient.*;
 import lombok.extern.slf4j.Slf4j;
 import net.badape.aresws.EventTopic;
-import net.badape.aresws.db.AbstractDataVerticle;
 
 @Slf4j
-public class AresAccount extends AbstractDataVerticle {
+public class AresAccount extends AbstractVerticle {
 
-    private EventBus eb;
+    private Pool pool;
 
-    @Override
-    public void start(Future<Void> startFuture) {
 
-        getConnection("aresaccount", result ->{
-            eb = vertx.eventBus();
-            eb.<JsonObject>consumer(EventTopic.GET_DEV_ACCOUNT, this::getOrCreateAccount);
-            eb.<JsonObject>consumer(EventTopic.GET_DEVICE_ACCOUNT, this::getOrCreateDeviceAccount);
-        });
-
+    public void start(Promise<Void> startPromise) {
+        pool = Pool.pool(vertx, getPgConnectOptions(), getPoolOptions());
+        EventBus eb = vertx.eventBus();
+        eb.<JsonObject>consumer(EventTopic.GET_EOS_ACCOUNT, this::getOrCreateEOSDeviceAccount);
+        startPromise.complete();
     }
 
-    @Override
-    public void stop(Future<Void> stopFuture) {
-        closeClient(stopFuture);
+    public void stop() {
+        pool.close();
     }
 
-    private final static String FIND_DEV_PLAYER = "SELECT * FROM public.dev_account_view WHERE dev_account_pk = ?";
-    private final static String CREATE_DEV_PLAYER = "INSERT INTO public.dev_account_view(dev_account_pk) VALUES (?)";
+    private final static String FIND_EOS_PLAYER = "SELECT * FROM public.eos_account_view WHERE eos_account_pk = $1";
+    private final static String CREATE_EOS_PLAYER = "INSERT INTO public.eos_account_view(eos_account_pk) VALUES ($1)";
 
-    private void getOrCreateAccount(Message<JsonObject> message) {
+    private void getOrCreateEOSDeviceAccount(Message<JsonObject> message) {
 
-        final Long devId = message.body().getLong("devId");
-        JsonArray sqlParams = new JsonArray().add(devId);
+        final String eosAccountId = message.body().getString("account_id");
 
-        conn.queryWithParams(FIND_DEV_PLAYER, sqlParams, result -> {
-            if (result.succeeded() && result.result().getNumRows() != 0) {
-
-                Long accountId = result.result().getRows().get(0).getLong("account_pk");
+        pool.preparedQuery(FIND_EOS_PLAYER).execute(Tuple.of(eosAccountId), ar -> {
+            if (ar.succeeded() && ar.result().rowCount() != 0) {
+                RowSet<Row> rows = ar.result();
+                Row row = rows.iterator().next();
+                Long accountId = row.getLong("account_pk");
                 JsonObject response = new JsonObject().put("accountId", accountId);
                 message.reply(response);
             } else {
-                conn.updateWithParams(CREATE_DEV_PLAYER, sqlParams, cPlayer -> {
-                    if (cPlayer.failed()) {
-                        message.fail(500, cPlayer.cause().getMessage());
-                        return;
-                    }
 
-                    Long accountId = cPlayer.result().getKeys().getLong(1);
-                    JsonObject response = new JsonObject()
-                            .put("accountId", accountId)
-                            .put("new", true);
-
-                    message.reply(response);
-                });
-            }
-        });
-    }
-
-    private final static String FIND_DEVICE_PLAYER = "SELECT * FROM public.device_account_view WHERE device_account_pk = ?";
-    private final static String CREATE_DEVICE_PLAYER = "INSERT INTO public.device_account_view(device_account_pk) VALUES (?)";
-
-    private void getOrCreateDeviceAccount(Message<JsonObject> message) {
-
-        final String deviceId = message.body().getString("deviceId");
-        JsonArray sqlParams = new JsonArray().add(deviceId);
-
-        conn.queryWithParams(FIND_DEVICE_PLAYER, sqlParams, result -> {
-            if (result.succeeded() && result.result().getNumRows() != 0) {
-                Long accountId = result.result().getRows().get(0).getLong("account_pk");
-                JsonObject response = new JsonObject().put("accountId", accountId);
-                message.reply(response);
-            } else {
                 log.info("creating new accounts");
-                conn.updateWithParams(CREATE_DEVICE_PLAYER, sqlParams, cPlayer -> {
-                    if (cPlayer.failed()) {
-                        message.fail(500, cPlayer.cause().getMessage());
-                        return;
+                pool.preparedQuery(CREATE_EOS_PLAYER).execute(Tuple.of(eosAccountId), cr -> {
+
+                    if (cr.failed()) {
+                        message.fail(500, cr.cause().getMessage());
+                    } else {
+                        pool.preparedQuery(FIND_EOS_PLAYER).execute(Tuple.of(eosAccountId), fr -> {
+                            log.info(fr.result().rowCount() + "");
+
+                            RowSet<Row> rows = fr.result();
+                            Row row = rows.iterator().next();
+                            Long accountId = row.getLong("account_pk");
+
+                            JsonObject newAccount = new JsonObject().put("accountId", accountId);
+                            vertx.eventBus().<JsonObject>request(EventTopic.NEW_ACCOUNT, newAccount, accResult -> {
+                                if (accResult.failed()) {
+                                    log.error(accResult.cause().getMessage());
+                                }
+                            });
+
+                            JsonObject response = new JsonObject()
+                                    .put("accountId", accountId);
+
+                            message.reply(response);
+                        });
                     }
-
-                    Long accountId = cPlayer.result().getKeys().getLong(1);
-                    JsonObject response = new JsonObject()
-                            .put("accountId", accountId)
-                            .put("new", true);
-
-                    message.reply(response);
                 });
             }
         });
+    }
+
+    private PgConnectOptions getPgConnectOptions() {
+
+        return new PgConnectOptions()
+                .setPort(config().getInteger("port", 5432))
+                .setHost(config().getString("host", "localhost"))
+                .setDatabase(config().getString("databaseName", "aresaccount"))
+                .setUser(config().getString("username", "postgres"))
+                .setPassword(config().getString("password", "changeme"));
+    }
+
+    private PoolOptions getPoolOptions() {
+        return new PoolOptions().setMaxSize(5);
     }
 }

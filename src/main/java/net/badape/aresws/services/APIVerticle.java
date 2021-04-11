@@ -1,17 +1,16 @@
 package net.badape.aresws.services;
 
 import io.vertx.core.AbstractVerticle;
-import io.vertx.core.Future;
+import io.vertx.core.Promise;
 import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerOptions;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.web.Cookie;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
-import io.vertx.ext.web.api.contract.RouterFactoryOptions;
-import io.vertx.ext.web.api.contract.openapi3.OpenAPI3RouterFactory;
-
+import io.vertx.ext.web.openapi.RouterBuilder;
+import io.vertx.ext.web.openapi.RouterBuilderOptions;
 import lombok.extern.slf4j.Slf4j;
 import net.badape.aresws.EventTopic;
 
@@ -21,62 +20,61 @@ public class APIVerticle extends AbstractVerticle {
     private HttpServer server;
     private EventBus eb;
 
-    @Override
-    public void start(Future<Void> startFuture) {
+    public void start(Promise<Void> startPromise) {
         eb = vertx.eventBus();
 
-        OpenAPI3RouterFactory.create(vertx, "api.yaml", openAPI3RouterFactoryAsyncResult -> {
-            if (openAPI3RouterFactoryAsyncResult.failed()) {
-                // Something went wrong during router factory initialization
-                Throwable exception = openAPI3RouterFactoryAsyncResult.cause();
-                log.error("oops, something went wrong during factory initialization", exception);
-                startFuture.fail(exception);
-            }
-            // Spec loaded with success
-            OpenAPI3RouterFactory routerFactory = openAPI3RouterFactoryAsyncResult.result();
-            // Add an handler with operationId
-
-            routerFactory.addHandlerByOperationId("refreshStore", this::refreshStore);
-            routerFactory.addFailureHandlerByOperationId("getTeam", this::failureHandler);
-
-            routerFactory.addHandlerByOperationId("getTeam", this::getTeam);
-            routerFactory.addFailureHandlerByOperationId("getTeam", this::failureHandler);
-
-            routerFactory.addHandlerByOperationId("getAccountRoster", this::getAccountRoster);
-            routerFactory.addFailureHandlerByOperationId("getAccountRoster", this::failureHandler);
-
-            routerFactory.addHandlerByOperationId("buyAccountRoster", this::buyAccountRoster);
-            routerFactory.addFailureHandlerByOperationId("buyAccountRoster", this::failureHandler);
-
-            routerFactory.addHandlerByOperationId("getGameNews", this::getGameNews);
-
-            // Add a security handler
-            routerFactory.addSecurityHandler("platform_key", this::securityHandler);
-
-            // Before router creation you can enable/disable various router factory behaviours
-            RouterFactoryOptions factoryOptions = new RouterFactoryOptions()
+        RouterBuilder.create(vertx, "api.yaml").onFailure(Throwable::printStackTrace).onSuccess(routerBuilder -> {
+// Before router creation you can enable/disable various router factory behaviours
+            RouterBuilderOptions factoryOptions = new RouterBuilderOptions()
                     .setMountResponseContentTypeHandler(true); // Mount ResponseContentTypeHandler automatically
+            routerBuilder.setOptions(factoryOptions);
 
-            // Now you have to generate the router
-            Router router = routerFactory.setOptions(factoryOptions).getRouter();
+            routerBuilder.operation("get-roster").handler(this::getRoster).failureHandler(this::failureHandler).failureHandler(this::failureHandler);
+            routerBuilder.operation("post-roster").handler(this::postRoster).failureHandler(this::failureHandler);
+
+            routerBuilder.operation("getGameNews").handler(this::getGameNews).failureHandler(this::failureHandler);
+            routerBuilder.operation("get-health").handler(this::getHealth).failureHandler(this::failureHandler);
+
+            routerBuilder.operation("getCharacterConfig").handler(this::getCharacterConfig).failureHandler(this::failureHandler);
+
+            routerBuilder.rootHandler(this::rootHandler);
+
+            Router router = routerBuilder.createRouter();
 
             // Now you can use your Router instance
-            server = vertx.createHttpServer(getHttpServerOptions());
-            server.requestHandler(router).listen((ar) -> {
-                if (ar.succeeded()) {
-                    log.info("Server started on port " + ar.result().actualPort());
-                    startFuture.complete();
-                } else {
-                    log.error("oops, something went wrong during server initialization", ar.cause());
-                    startFuture.fail(ar.cause());
-                }
-            });
+            server = vertx
+                    .createHttpServer(getHttpServerOptions())
+                    .requestHandler(router);
+            server.listen()
+                    .onSuccess(server -> System.out.println("Server started on port " + server.actualPort()))
+                    .onFailure(Throwable::printStackTrace);
+
+        });
+
+    }
+
+    private void getCharacterConfig(RoutingContext routingContext) {
+        JsonObject message = new JsonObject();
+        eb.<JsonArray>request(EventTopic.GET_CHARACTERS_CONFIG, message, reply -> {
+            if (reply.succeeded()) {
+                routingContext.response().setStatusMessage("OK").end(reply.result().body().encode());
+            } else {
+                routingContext.fail(reply.cause());
+            }
         });
     }
 
-    @Override
-    public void stop(Future<Void> future) {
-        server.close(result -> future.complete());
+    private void rootHandler(RoutingContext routingContext) {
+        log.info(routingContext.request().path());
+        routingContext.next();
+    }
+
+    private void getHealth(RoutingContext routingContext) {
+        routingContext.response().setStatusMessage("OK").end(new JsonObject().put("id", "OK").encode());
+    }
+
+    public void stop(Promise<Void> startPromise) {
+        server.close(result -> startPromise.complete());
     }
 
     private HttpServerOptions getHttpServerOptions() {
@@ -86,61 +84,95 @@ public class APIVerticle extends AbstractVerticle {
         return options;
     }
 
-    private void refreshStore(RoutingContext routingContext) {
-        JsonObject message = new JsonObject();
-        eb.<JsonObject>request(EventTopic.STORE_REFRESH, message, reply -> {
-            if (reply.succeeded()) {
-                routingContext.response().setStatusMessage("OK").end(reply.result().body().encode());
-            } else {
-                routingContext.fail(reply.cause());
-            }
-        });
-    }
+    private void getRoster(RoutingContext routingContext) {
 
-    private void getTeam(RoutingContext routingContext) {
-        log.info("getTeam");
-
-        String account = routingContext.getCookie("account").getValue();
         JsonObject message = new JsonObject()
-                .put("accountId", Long.parseLong(account));
+                .put("account_id", routingContext.pathParam("account"));
 
-        eb.<JsonObject>request(EventTopic.GET_TEAM, message, reply -> {
-            if (reply.succeeded()) {
-                routingContext.response().setStatusMessage("OK").end(reply.result().body().encode());
-            } else {
-                routingContext.fail(reply.cause());
-            }
+        log.info(message.encode());
+
+        eb.<JsonObject>request(EventTopic.GET_EOS_ACCOUNT, message, result -> {
+
+            Long aresAccountId = result.result().body().getLong("accountId");
+            JsonObject aMessage = new JsonObject().put("accountId", aresAccountId);
+
+            eb.<JsonObject>request(EventTopic.GET_TEAM, aMessage, reply -> {
+                if (reply.succeeded()) {
+                    log.info(reply.result().body().encode());
+                    routingContext.response().setStatusMessage("OK").end(reply.result().body().encode());
+                } else {
+                    routingContext.fail(reply.cause());
+                }
+            });
         });
     }
 
     private void getAccountRoster(RoutingContext routingContext) {
-        log.info("getAccountRoster");
-        String account = routingContext.getCookie("account").getValue();
-        JsonObject message = new JsonObject()
-                .put("accountId", Long.parseLong(account));
+        String eosAccountId = routingContext.pathParam("account");
 
-        eb.<JsonObject>request(EventTopic.GET_ROSTER, message, reply -> {
-            if (reply.succeeded()) {
-                routingContext.response().setStatusMessage("OK").end(reply.result().body().encode());
+        if (eosAccountId == null) {
+            routingContext.fail(new Throwable("missing eos id"));
+        }
+
+        JsonObject message = new JsonObject().put("account_id", eosAccountId);
+
+        log.info(message.encode());
+
+        eb.<JsonObject>request(EventTopic.GET_EOS_ACCOUNT, message, result -> {
+
+            if (result.succeeded()) {
+                log.info(result.result().body().encode());
+
+                Long aresAccountId = result.result().body().getLong("accountId");
+                JsonObject aMessage = new JsonObject().put("accountId", aresAccountId);
+
+                eb.<JsonArray>request(EventTopic.GET_ROSTER, aMessage, reply -> {
+                    if (reply.succeeded()) {
+                        routingContext.response().setStatusMessage("OK").end(reply.result().body().encode());
+                    } else {
+                        routingContext.fail(reply.cause());
+                    }
+                });
             } else {
-                routingContext.fail(reply.cause());
+                routingContext.fail(result.cause());
             }
         });
     }
 
-    private void buyAccountRoster(RoutingContext routingContext) {
-        JsonObject body = routingContext.getBodyAsJson();
-        String account = routingContext.getCookie("account").getValue();
-        JsonObject message = new JsonObject()
-                .put("accountId", Long.parseLong(account))
-                .put("heroId", body.getLong("hero_id", -1L));
+    private void postRoster(RoutingContext routingContext) {
+        String eosAccountId = routingContext.pathParam("account");
 
-        eb.<JsonObject>request(EventTopic.BUY_HERO, message, reply -> {
-            if (reply.succeeded()) {
-                routingContext.response().setStatusMessage("OK").end(reply.result().body().encode());
-            } else {
-                routingContext.fail(reply.cause());
-            }
+        if (eosAccountId == null) {
+            routingContext.fail(new Throwable("missing eos id"));
+        }
+
+        JsonObject body = routingContext.getBodyAsJson();
+        log.info(body.encode());
+
+        String name = body.getString("name", "Empty");
+        if (name.equals("Empty")) {
+            routingContext.fail(new Throwable("missing hero name"));
+        }
+
+        JsonObject message = new JsonObject().put("account_id", eosAccountId);
+        eb.<JsonObject>request(EventTopic.GET_EOS_ACCOUNT, message, result -> {
+
+            Long aresAccountId = result.result().body().getLong("accountId");
+            JsonObject bMessage = new JsonObject()
+                    .put("accountId", aresAccountId)
+                    .put("title", name);
+
+            log.info(bMessage.encode());
+
+            eb.<JsonObject>request(EventTopic.BUY_HERO, bMessage, reply -> {
+                if (reply.succeeded()) {
+                    log.info(reply.result().body().encode());
+                    routingContext.response().setStatusMessage("OK").end(reply.result().body().encode());
+                } else {
+                    routingContext.fail(reply.cause());
+                }
+            });
+
         });
     }
 
@@ -158,78 +190,10 @@ public class APIVerticle extends AbstractVerticle {
         });
     }
 
-    private void securityHandler(RoutingContext routingContext) {
-
-
-        String platform = routingContext.request().getHeader("X-PLATFORM-KEY");
-
-        log.info("securityHandler: "+ platform);
-
-        JsonObject message;
-        switch (platform) {
-            case "dev":
-                log.info("dev!");
-                message = new JsonObject()
-                        .put("devId", Long.parseLong(routingContext.pathParam("account")));
-
-                eb.<JsonObject>send(EventTopic.GET_DEV_ACCOUNT, message, result -> {
-
-                    Long accountId = result.result().body().getLong("accountId");
-                    routingContext.addCookie(Cookie.cookie("account", accountId.toString()));
-
-                    if (result.result().body().getBoolean("new", false)) {
-                        JsonObject newAccount = new JsonObject().put("accountId", accountId);
-
-                        eb.<JsonObject>send(EventTopic.NEW_ACCOUNT, newAccount, accResult -> {
-                            if (accResult.failed()) {
-                                routingContext.fail(500, accResult.cause());
-                            } else {
-                                routingContext.next();
-                            }
-                        });
-                    } else {
-                        routingContext.next();
-                    }
-                });
-                break;
-            case "device":
-                message = new JsonObject()
-                        .put("deviceId", routingContext.pathParam("account"));
-
-                eb.<JsonObject>send(EventTopic.GET_DEVICE_ACCOUNT, message, result -> {
-
-                    log.info(result.result().body().encode());
-
-                    Long accountId = result.result().body().getLong("accountId");
-                    routingContext.addCookie(Cookie.cookie("account", accountId.toString()));
-
-                    if (result.result().body().getBoolean("new", false)) {
-                        log.info("create new store account");
-
-                        JsonObject newAccount = new JsonObject().put("accountId", accountId);
-
-                        eb.<JsonObject>send(EventTopic.NEW_ACCOUNT, newAccount, accResult -> {
-                            if (accResult.failed()) {
-                                routingContext.fail(500, accResult.cause());
-                            } else {
-                                routingContext.next();
-                            }
-                        });
-                    } else {
-                        routingContext.next();
-                    }
-                });
-                break;
-            default:
-                routingContext.fail(403, new RuntimeException("access denied"));
-        }
-
-    }
-
     private void failureHandler(RoutingContext routingContext) {
         String failure = routingContext.failure().getMessage();
 
-        log.error("failure "+ failure);
+        log.error("failure " + failure);
 
         JsonObject reply = new JsonObject()
                 .put("error", failure);
