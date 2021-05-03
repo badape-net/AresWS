@@ -61,13 +61,14 @@ public class AresAccount extends AbstractVerticle {
                             vertx.eventBus().<JsonObject>request(EventTopic.NEW_ACCOUNT, newAccount, accResult -> {
                                 if (accResult.failed()) {
                                     log.error(accResult.cause().getMessage());
+                                    message.fail(500, accResult.cause().getMessage());
+                                } else {
+                                    JsonObject response = new JsonObject()
+                                            .put("accountId", accountId);
+
+                                    message.reply(response);
                                 }
                             });
-
-                            JsonObject response = new JsonObject()
-                                    .put("accountId", accountId);
-
-                            message.reply(response);
                         });
                     }
                 });

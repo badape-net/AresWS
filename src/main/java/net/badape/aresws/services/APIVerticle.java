@@ -48,9 +48,7 @@ public class APIVerticle extends AbstractVerticle {
             server.listen()
                     .onSuccess(server -> System.out.println("Server started on port " + server.actualPort()))
                     .onFailure(Throwable::printStackTrace);
-
         });
-
     }
 
     private void getCharacterConfig(RoutingContext routingContext) {
@@ -65,7 +63,6 @@ public class APIVerticle extends AbstractVerticle {
     }
 
     private void rootHandler(RoutingContext routingContext) {
-        log.info(routingContext.request().path());
         routingContext.next();
     }
 
@@ -89,8 +86,6 @@ public class APIVerticle extends AbstractVerticle {
         JsonObject message = new JsonObject()
                 .put("account_id", routingContext.pathParam("account"));
 
-        log.info(message.encode());
-
         eb.<JsonObject>request(EventTopic.GET_EOS_ACCOUNT, message, result -> {
 
             Long aresAccountId = result.result().body().getLong("accountId");
@@ -98,7 +93,6 @@ public class APIVerticle extends AbstractVerticle {
 
             eb.<JsonObject>request(EventTopic.GET_TEAM, aMessage, reply -> {
                 if (reply.succeeded()) {
-                    log.info(reply.result().body().encode());
                     routingContext.response().setStatusMessage("OK").end(reply.result().body().encode());
                 } else {
                     routingContext.fail(reply.cause());
@@ -116,13 +110,9 @@ public class APIVerticle extends AbstractVerticle {
 
         JsonObject message = new JsonObject().put("account_id", eosAccountId);
 
-        log.info(message.encode());
-
         eb.<JsonObject>request(EventTopic.GET_EOS_ACCOUNT, message, result -> {
 
             if (result.succeeded()) {
-                log.info(result.result().body().encode());
-
                 Long aresAccountId = result.result().body().getLong("accountId");
                 JsonObject aMessage = new JsonObject().put("accountId", aresAccountId);
 
@@ -147,7 +137,6 @@ public class APIVerticle extends AbstractVerticle {
         }
 
         JsonObject body = routingContext.getBodyAsJson();
-        log.info(body.encode());
 
         String name = body.getString("name", "Empty");
         if (name.equals("Empty")) {
@@ -162,8 +151,6 @@ public class APIVerticle extends AbstractVerticle {
                     .put("accountId", aresAccountId)
                     .put("title", name);
 
-            log.info(bMessage.encode());
-
             eb.<JsonObject>request(EventTopic.BUY_HERO, bMessage, reply -> {
                 if (reply.succeeded()) {
                     log.info(reply.result().body().encode());
@@ -172,7 +159,6 @@ public class APIVerticle extends AbstractVerticle {
                     routingContext.fail(reply.cause());
                 }
             });
-
         });
     }
 
@@ -181,27 +167,15 @@ public class APIVerticle extends AbstractVerticle {
         log.error("GetGameNews!");
         JsonObject message = new JsonObject();
 
-        eb.<JsonObject>request(EventTopic.GET_GAME_NEWS, message, reply -> {
-            if (reply.succeeded()) {
-                routingContext.response().setStatusMessage("OK").end(reply.result().body().encode());
-            } else {
-                routingContext.fail(reply.cause());
-            }
-        });
+        routingContext.response().setStatusMessage("OK").end("{}");
     }
 
     private void failureHandler(RoutingContext routingContext) {
         String failure = routingContext.failure().getMessage();
 
-        log.error("failure " + failure);
+        log.error("failure: " + failure);
 
-        JsonObject reply = new JsonObject()
-                .put("error", failure);
-
-        routingContext.response()
-                .setStatusCode(500)
-                .end(reply.encode());
-
-
+        JsonObject reply = new JsonObject().put("error", failure);
+        routingContext.response().setStatusCode(500).end(reply.encode());
     }
 }

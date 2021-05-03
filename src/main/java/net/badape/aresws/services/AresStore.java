@@ -23,7 +23,6 @@ public class AresStore extends AbstractVerticle {
         EventBus eb = vertx.eventBus();
         eb.<JsonObject>consumer(EventTopic.NEW_ACCOUNT, this::newAccount);
         eb.<JsonObject>consumer(EventTopic.BUY_HERO, this::buyHero);
-        eb.<JsonObject>consumer(EventTopic.GET_ROSTER, this::getRoster);
         eb.<JsonObject>consumer(EventTopic.GET_TEAM, this::getTeam);
         eb.<JsonArray>consumer(EventTopic.HERO_REFRESH, this::heroRefresh);
 
@@ -46,7 +45,7 @@ public class AresStore extends AbstractVerticle {
     }
 
     private static final String SELECT_TEAM =
-            "SELECT title as name, experience, kills, deaths FROM public.roster_view WHERE account_fk IS NOT NULL AND account_pk = $1";
+            "SELECT title as name, experience, kills, deaths FROM public.roster_view WHERE account_pk = $1";
 
     private static final String SELECT_BALANCE = "SELECT balance FROM public.account a2 WHERE account_pk = $1";
 
@@ -85,30 +84,6 @@ public class AresStore extends AbstractVerticle {
         });
     }
 
-    private static final String SELECT_ROSTER =
-            "SELECT title, hero_pk, game_idx, balance, level, experience, kills, deaths, credits, health, mana, stamina, spawn_cost FROM public.roster_view WHERE roster_view.account_pk = $1";
-
-    private void getRoster(Message<JsonObject> message) {
-        final Long accountId = message.body().getLong("accountId");
-
-        pool.preparedQuery(SELECT_ROSTER).execute(Tuple.of(accountId), ar -> {
-            if (ar.succeeded()) {
-
-                JsonArray roster = new JsonArray();
-                ar.result().forEach(row -> {
-                    roster.add(row.toJson());
-                });
-
-//                JsonObject response = new JsonObject().put("data", roster);
-                message.reply(roster);
-
-            } else {
-                log.error("Failure: " + ar.cause().getMessage());
-                message.fail(500, ar.cause().getMessage());
-            }
-        });
-    }
-
     private static final String INSERT_NEW_ACCOUNT = "INSERT INTO public.account(account_pk, balance) VALUES ($1, $2)";
 
     private void newAccount(Message<JsonObject> message) {
@@ -118,9 +93,9 @@ public class AresStore extends AbstractVerticle {
         pool.preparedQuery(INSERT_NEW_ACCOUNT).execute(Tuple.of(accountId, credits), ar -> {
             if (ar.succeeded()) {
                 RowSet<Row> rows = ar.result();
-                log.info("Got " + rows.size() + " rows ");
+                message.reply(new JsonObject());
             } else {
-                log.error("Failure: " + ar.cause().getMessage());
+                message.fail(500, ar.cause().getMessage());
             }
         });
     }

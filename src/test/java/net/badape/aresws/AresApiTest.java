@@ -4,7 +4,6 @@ import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
-import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.client.WebClient;
@@ -15,7 +14,6 @@ import lombok.extern.slf4j.Slf4j;
 import net.badape.aresws.services.APIVerticle;
 import net.badape.aresws.services.AresAccount;
 import net.badape.aresws.services.AresStore;
-import net.badape.aresws.services.HeroContentRefresh;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -36,7 +34,6 @@ public class AresApiTest {
         log.info("deploying ares account");
         vertx.deployVerticle(AresAccount.class.getName(), testContext.succeedingThenComplete());
         final List<Future> sFutures = List.of(
-                deployHelper(vertx, HeroContentRefresh.class.getName()),
                 deployHelper(vertx, AresStore.class.getName()),
                 deployHelper(vertx, AresAccount.class.getName()),
                 deployHelper(vertx, APIVerticle.class.getName())
@@ -55,7 +52,7 @@ public class AresApiTest {
     @Test
     @DisplayName("Refresh Hero Store")
     void refreshHeroStore(Vertx vertx, VertxTestContext testContext) throws InterruptedException {
-        vertx.eventBus().send(EventTopic.FORCE_HERO_REFRESH, "refresh");
+
         Thread.sleep(10000);
         testContext.completeNow();
     }

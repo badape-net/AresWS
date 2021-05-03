@@ -103,9 +103,9 @@
         <createView catalogName="cat"
                     replaceIfExists="true"
                     viewName="roster_view">
-            SELECT * FROM account
-            CROSS JOIN hero
-            FULL OUTER JOIN roster ON roster.hero_fk=hero.hero_pk AND roster.account_fk = account.account_pk
+            SELECT account_fk as account_pk, hero_fk, experience, kills, deaths, hero.title
+            FROM roster
+            JOIN hero ON roster.hero_fk = hero.hero_pk;
         </createView>
     </changeSet>
 

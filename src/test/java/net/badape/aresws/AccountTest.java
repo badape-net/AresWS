@@ -11,7 +11,6 @@ import io.vertx.junit5.VertxTestContext;
 import lombok.extern.slf4j.Slf4j;
 import net.badape.aresws.services.AresAccount;
 import net.badape.aresws.services.AresStore;
-import net.badape.aresws.services.HeroContentRefresh;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -33,7 +32,6 @@ public class AccountTest {
         log.info("deploying ares account");
         vertx.deployVerticle(AresAccount.class.getName(), testContext.succeedingThenComplete());
         final List<Future> sFutures = List.of(
-                deployHelper(vertx, HeroContentRefresh.class.getName()),
                 deployHelper(vertx, AresStore.class.getName()),
                 deployHelper(vertx, AresAccount.class.getName())
         );
@@ -51,7 +49,7 @@ public class AccountTest {
     @Test
     @DisplayName("Refresh Hero Store")
     void refreshHeroStore(Vertx vertx, VertxTestContext testContext) throws InterruptedException {
-        vertx.eventBus().send(EventTopic.FORCE_HERO_REFRESH, "refresh");
+
         Thread.sleep(10000);
         testContext.completeNow();
     }
