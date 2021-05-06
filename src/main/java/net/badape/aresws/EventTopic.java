@@ -13,4 +13,6 @@ public final class EventTopic {
 
     public static final String GET_FACTION_CONFIG = AresConfig.class.getCanonicalName() + ".faction";
     public static final String GET_CHARACTERS_CONFIG = AresConfig.class.getCanonicalName() + ".characters";
+
+    public static final String PUT_EVENT = ElasticSearchClient.class.getCanonicalName() + ".put_event";
 }

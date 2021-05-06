@@ -28,7 +28,7 @@ public class AresWebServices extends AbstractVerticle {
         retriever.getConfig(envConfig -> {
 
             final List<Future> sFutures = List.of(
-//                    deployHelper(HeroContentRefresh.class.getName(), envConfig.result(), 1),
+                    deployHelper(ElasticSearchClient.class.getName(), envConfig.result(), 1),
                     deployHelper(AresAnalyticsReciever.class.getName(), envConfig.result(), 1),
                     deployHelper(AresConfig.class.getName(), envConfig.result(), 1),
                     deployHelper(AresStore.class.getName(), envConfig.result(), 1),
