@@ -270,7 +270,7 @@
                         <image>
                             <name>${docker.image}</name>
                             <build>
-                                <from>java:8-jre</from>
+                                <from>java:alpine-jre</from>
                                 <tags>
                                     <tag>${project.version}</tag>
                                 </tags>
