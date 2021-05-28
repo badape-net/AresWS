@@ -270,7 +270,7 @@
                         <image>
                             <name>${docker.image}</name>
                             <build>
-                                <from>java:alpine-jre</from>
+                                <from>adoptopenjdk/openjdk11:jdk-11.0.9.1_1</from>
                                 <tags>
                                     <tag>${project.version}</tag>
                                 </tags>
