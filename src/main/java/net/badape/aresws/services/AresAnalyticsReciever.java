@@ -39,7 +39,7 @@ public class AresAnalyticsReciever extends AbstractVerticle {
             socket.handler(parser::handle);
         });
 
-        server.listen(6543, "localhost", res -> {
+        server.listen(res -> {
             if (res.succeeded()) {
                 startPromise.complete();
             } else {

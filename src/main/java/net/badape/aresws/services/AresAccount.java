@@ -80,7 +80,7 @@ public class AresAccount extends AbstractVerticle {
 
         return new PgConnectOptions()
                 .setPort(config().getInteger("port", 5432))
-                .setHost(config().getString("host", "localhost"))
+                .setHost(config().getString("host", "postgres"))
                 .setDatabase(config().getString("databaseName", "aresaccount"))
                 .setUser(config().getString("username", "postgres"))
                 .setPassword(config().getString("password", "changeme"));

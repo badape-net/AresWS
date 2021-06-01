@@ -50,7 +50,7 @@ public class AresConfig extends AbstractVerticle {
 
         return new PgConnectOptions()
                 .setPort(config().getInteger("port", 5432))
-                .setHost(config().getString("host", "localhost"))
+                .setHost(config().getString("host", "postgres"))
                 .setDatabase(config().getString("databaseName", "aresconfig"))
                 .setUser(config().getString("username", "postgres"))
                 .setPassword(config().getString("password", "changeme"));

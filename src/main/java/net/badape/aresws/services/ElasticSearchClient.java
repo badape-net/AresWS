@@ -18,7 +18,7 @@ public class ElasticSearchClient extends AbstractVerticle {
     public void start() {
         WebClientOptions options = new WebClientOptions()
                 .setUserAgent("My-App/1.2.3");
-        options.setKeepAlive(true).setDefaultHost("localhost").setDefaultPort(9200);
+        options.setKeepAlive(true).setDefaultHost("elasticsearch").setDefaultPort(9200);
         client = WebClient.create(vertx, options);
 
         EventBus eb = vertx.eventBus();

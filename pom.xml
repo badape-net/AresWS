@@ -6,7 +6,7 @@
     <description>Player Services</description>
     <groupId>net.badape</groupId>
     <artifactId>aresws</artifactId>
-    <version>1.2.11</version>
+    <version>1.2.12</version>
     <packaging>jar</packaging>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
